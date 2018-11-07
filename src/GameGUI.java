@@ -6,9 +6,10 @@ import java.util.ArrayList;
 
 public class GameGUI extends JFrame implements MouseListener{
 
-    Deck yourDeckofCards = new Deck();
+    private Deck yourDeckOfCards = new Deck();
+    private Deck enemyDeckOfCards = new Deck();
 
-    Container container;
+    private Container container;
     private JPanel enemyHand;
     private JPanel enemyField;
     private JPanel yourField;
@@ -26,15 +27,25 @@ public class GameGUI extends JFrame implements MouseListener{
     private JPanel enemyMonsterZone2;
     private JPanel enemyMonsterZone1;
     private JPanel yourMonsterZone1;
+    private Card cardZone1;
     private JPanel yourMonsterZone2;
+    private Card cardZone2;
     private JPanel yourMonsterZone3;
+    private Card cardZone3;
     private JPanel yourMonsterZone4;
+    private Card cardZone4;
     private JPanel yourMagicZone;
-    private Card yourCard1;
+    private Card cardMagic;
+    private JPanel yourCard1;
+    private Card card1;
     private JPanel yourCard2;
+    private Card card2;
     private JPanel yourCard3;
+    private Card card3;
     private JPanel yourCard4;
+    private Card card4;
     private JPanel yourCard5;
+    private Card card5;
     private JPanel yourDeck;
 
 
@@ -46,12 +57,12 @@ public class GameGUI extends JFrame implements MouseListener{
         setLayout(new GridLayout(4,1,0,5));
 
         container = getContentPane();
-        container.setBackground(Color.lightGray);
 
         //start populate enemyHand
         enemyHand = new JPanel(new GridLayout(1,7,5,0));
 
-        enemyDeck = new JPanel();
+        enemyDeck = new Card();
+        enemyDeck.add(new JLabel(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards()));
         enemyDeck.setBackground(Color.red);
         enemyHand.add(enemyDeck);
 
@@ -95,7 +106,7 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyField.add(enemyMonsterZone2);
 
         enemyMonsterZone1 = new JPanel();
-        enemyMonsterZone1.add(yourDeckofCards.get("Vicar Amelia"));
+        enemyMonsterZone1.add(enemyDeckOfCards.draw());
         enemyMonsterZone1.addMouseListener(this);
         enemyField.add(enemyMonsterZone1);
 
@@ -136,26 +147,38 @@ public class GameGUI extends JFrame implements MouseListener{
         //start populate your hand
         yourHand = new JPanel(new GridLayout(1,7,5,0));
 
-        yourCard1 = yourDeckofCards.get("Maria");
-        yourCard1.addMouseListener(this);
+        yourCard1 = new JPanel();
+        card1 = yourDeckOfCards.draw();
+        card1.addMouseListener(this);
+        yourCard1.add(card1);
         yourHand.add(yourCard1);
 
         yourCard2 = new JPanel();
+        card2 = yourDeckOfCards.draw();
+        yourCard2.add(card2);
         yourHand.add(yourCard2);
 
         yourCard3 = new JPanel();
+        card3 = yourDeckOfCards.draw();
+        yourCard3.add(card3);
         yourHand.add(yourCard3);
 
         yourCard4 = new JPanel();
+        card4 = yourDeckOfCards.draw();
+        yourCard4.add(card4);
         yourHand.add(yourCard4);
 
         yourCard5 = new JPanel();
+        card5 = yourDeckOfCards.draw();
+        yourCard5.add(card5);
         yourHand.add(yourCard5);
 
         padding = new JLabel();
         yourHand.add(padding);
 
         yourDeck = new JPanel();
+        yourDeck.add(new JLabel(yourDeckOfCards.getCurrentCards()+" / "+yourDeckOfCards.getMaxNoCards()));
+        yourDeck.addMouseListener(this);
         yourDeck.setBackground(Color.green);
         yourHand.add(yourDeck);
 
@@ -167,22 +190,34 @@ public class GameGUI extends JFrame implements MouseListener{
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+        if(e.getSource()==card1)
         {
-            yourCard1.setSelected(true);
+            card1.setSelected(true);
             yourCard1.setBackground(Color.yellow);
             yourMonsterZone1.setBackground(Color.green);
         }
 
         if(e.getSource()==yourMonsterZone1)
         {
-            if(yourCard1.isSelected()) {
-                System.out.println("E");
-                yourMonsterZone1.add(yourCard1);
-                yourCard1.setSelected(false);
+            if(card1.isSelected()) {
+                yourMonsterZone1.add(card1);
+                yourMonsterZone1.remove(card1);
+                card1.setSelected(false);
+                card1.setInPlay(true);
                 repaint();
             }
         }
+
+        if(e.getSource()==yourDeck)
+        {
+            if(card1.isInPlay()) {
+                yourCard1.add(yourDeckOfCards.draw());
+                card1.setInPlay(false);
+                repaint();
+            }
+        }
+
+        System.out.println(yourCard1.toString());
     }
 
     @Override
@@ -197,18 +232,18 @@ public class GameGUI extends JFrame implements MouseListener{
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+        if(e.getSource()==card1)
         {
-            if(!yourCard1.isSelected())
+            if(!card1.isSelected())
                 yourCard1.setBackground(Color.green);
         }
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+        if(e.getSource()==card1)
         {
-            if(!yourCard1.isSelected())
+            if(!card1.isSelected())
                 yourCard1.setBackground(container.getBackground());
         }
     }

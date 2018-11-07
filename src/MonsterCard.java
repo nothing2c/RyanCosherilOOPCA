@@ -1,17 +1,20 @@
+import javax.swing.*;
+
 public class MonsterCard extends Card {
 
     private int health;
     private int attack;
 
     public MonsterCard(String imagePath, String name, int attack, int health){
-        super(imagePath);
+        super(imagePath, name);
+
         setAttack(attack);
         setHealth(health);
         setToolTipText(this.toString());
     }
 
     public String toString(){
-        return "Attack: " + getAttack() + "    Health: " + getHealth();
+        return "Name: " + super.getName() + "    Attack: " + getAttack() + "    Health: " + getHealth();
     }
 
 

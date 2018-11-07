@@ -10,13 +10,11 @@ public class Card extends JPanel{
 
     public Card(){
         super();
-        picture = new ImageIcon("cardBack.png");
-        image= new JLabel(picture);
-        add(image);
     }
 
-    public Card(String imagePath){
+    public Card(String imagePath, String name){
         super();
+        setName(name);
         picture = new ImageIcon(imagePath);
         image= new JLabel(picture);
         add(image);
