@@ -1,4 +1,4 @@
-import javax.swing.*;
+
 
 public class MonsterCard extends Card {
 
@@ -7,7 +7,6 @@ public class MonsterCard extends Card {
 
     public MonsterCard(String imagePath, String name, int attack, int health){
         super(imagePath, name);
-
         setAttack(attack);
         setHealth(health);
         setToolTipText(this.toString());
