@@ -4,8 +4,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
-//try using updateUI to change position of cards
-
 public class GameGUI extends JFrame implements MouseListener{
 
     private Deck yourDeckOfCards;
@@ -278,13 +276,22 @@ public class GameGUI extends JFrame implements MouseListener{
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+        for(Card c : yourHeldCards)
         {
-            yourCard1.setSelected(true);
-            yourCard1.setBackground(Color.yellow);
+            if(e.getSource()==c)
+            {
+                for(Card x : yourHeldCards)//used to deselect any cards that may have been previously selected
+                {
+                    if(x.isSelected())
+                    {
+                        x.setSelected(false);
+                    }
+                }
+                c.setSelected(true);
+            }
         }
 
-        if(e.getSource()==yourMonsterSlot1)
+        /*if(e.getSource()==yourMonsterSlot1)
         {
             if(yourCard1.isSelected()) {
                 System.out.println("Hi");
@@ -294,6 +301,14 @@ public class GameGUI extends JFrame implements MouseListener{
                 yourCardSlot1.remove(yourCard1);
                 yourCard1.setBackground(container.getBackground());
                 yourHand.updateUI();
+            }
+        }*/
+
+        for(JPanel j : yourMonsterSlots)
+        {
+            if(e.getSource()==j)
+            {
+
             }
         }
 
@@ -308,9 +323,6 @@ public class GameGUI extends JFrame implements MouseListener{
             System.out.println(recipient.toString());
             attack(attacker, recipient);
         }
-
-
-
 
         if(e.getSource()==yourDeck)
         {
@@ -336,19 +348,36 @@ public class GameGUI extends JFrame implements MouseListener{
 
     @Override
     public void mouseEntered(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+
+        for(Card c : yourHeldCards)
         {
-            if(!yourCard1.isSelected())
-                yourCard1.setBackground(Color.green);
+            if(e.getSource()==c)
+            {
+                if(!c.isSelected())
+                {
+                    c.setBackground(Color.green);
+                }
+            }
         }
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if(e.getSource()==yourCard1)
+        /*if(e.getSource()==yourCard1)
         {
             if(!yourCard1.isSelected())
                 yourCard1.setBackground(container.getBackground());
+        }*/
+
+        for(Card c : yourHeldCards)
+        {
+            if(e.getSource()==c)
+            {
+                if(!c.isSelected())
+                {
+                    c.setBackground(container.getBackground());
+                }
+            }
         }
     }
 }

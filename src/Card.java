@@ -1,4 +1,5 @@
 import javax.swing.*;
+import java.awt.*;
 
 public class Card extends JPanel{
 
@@ -28,6 +29,10 @@ public class Card extends JPanel{
 
     public void setSelected(boolean selected) {
         this.selected = selected;
+        if(this.isSelected())
+            this.setBackground(Color.yellow);
+        else
+            this.setBackground(Color.white);
     }
 
     public void setInPlay(boolean inPlay) {
