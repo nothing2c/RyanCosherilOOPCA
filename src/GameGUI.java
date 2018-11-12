@@ -27,6 +27,7 @@ public class GameGUI extends JFrame implements MouseListener{
     private JPanel enemyField;
     private JPanel yourField;
     private JPanel yourHand;
+
     private JLabel padding;
     private Card enemyDeck;
     private JPanel enemyCardSlot5;
@@ -291,7 +292,7 @@ public class GameGUI extends JFrame implements MouseListener{
             }
         }
 
-        /*if(e.getSource()==yourMonsterSlot1)
+        if(e.getSource()==yourMonsterSlot1)
         {
             if(yourCard1.isSelected()) {
                 System.out.println("Hi");
@@ -302,13 +303,24 @@ public class GameGUI extends JFrame implements MouseListener{
                 yourCard1.setBackground(container.getBackground());
                 yourHand.updateUI();
             }
-        }*/
+        }
 
         for(JPanel j : yourMonsterSlots)
         {
             if(e.getSource()==j)
             {
-
+                for(Card c : yourHeldCards)
+                {
+                    if(c.isSelected())
+                    {
+                        c.setSelected(false);
+                        j.add(c);
+                        j.setBackground(Color.green);
+                        yourField.updateUI();
+                        yourHand.remove(c);
+                        yourHand.updateUI();
+                    }
+                }
             }
         }
 
