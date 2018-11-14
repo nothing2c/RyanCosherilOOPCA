@@ -9,6 +9,11 @@ public class GameGUI extends JFrame implements MouseListener{
     private Deck yourDeckOfCards;
     private Deck enemyDeckOfCards;
 
+    private int yourHealth;
+    private JLabel yourHealthDisplay;
+    private int enemyHealth;
+    private JLabel enemyHealthDisplay;
+
     private JPanel graveYard;//used to remove killed monster cards from the field
 
     private ArrayList<Card> enemyHeldCards;
@@ -74,13 +79,18 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyDeckOfCards = new Deck();
         graveYard = new JPanel();
 
+        yourHealth = 50;
+        enemyHealth = 50;
+
         //start populate enemyHand
         enemyHand = new JPanel(new GridLayout(1,7,5,0));
         enemyHeldCards = new ArrayList<>();
 
-        enemyDeck = new Card();
+        enemyDeck = new JPanel();
         enemyCardCount = new JLabel(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
         enemyDeck.add(enemyCardCount);
+        enemyHealthDisplay = new JLabel("HP: "+enemyHealth);
+        enemyDeck.add(enemyHealthDisplay);
         enemyDeck.setBackground(Color.red);
         enemyHand.add(enemyDeck);
 
@@ -236,6 +246,8 @@ public class GameGUI extends JFrame implements MouseListener{
         yourDeck = new JPanel();
         yourCardCount = new JLabel(yourDeckOfCards.getCurrentCards()+" / "+yourDeckOfCards.getMaxNoCards());
         yourDeck.add(yourCardCount);
+        yourHealthDisplay = new JLabel("HP: "+yourHealth);
+        yourDeck.add(yourHealthDisplay);
         yourDeck.addMouseListener(this);
         yourDeck.setBackground(Color.green);
         yourHand.add(yourDeck);
@@ -255,13 +267,28 @@ public class GameGUI extends JFrame implements MouseListener{
         recipient.setHealth(recipient.getHealth()-attacker.getAttack());
 
         if(recipient.getHealth()<=0)
+        {
             graveYard.add(recipient);
+            enemyMonsterCards.remove(recipient);
+            updateEnemyHealth();
+            if(enemyHealth<=0)
+                JOptionPane.showMessageDialog(null,"You Win!");
+        }
         else
             recipient.setToolTipText(recipient.toString());
 
         attacker.setSelected(false);
         this.attacker=null;
+        this.recipient=null;
         enemyField.updateUI();
+    }
+
+    public void updateEnemyHealth()
+    {
+        enemyHealth += recipient.getHealth();
+        if(enemyHealth<0)
+            enemyHealth=0;
+        enemyHealthDisplay.setText("HP: "+enemyHealth);
     }
 
     @Override
@@ -315,23 +342,18 @@ public class GameGUI extends JFrame implements MouseListener{
             }
         }//end card play event handling
 
-        /*if(e.getSource()==yourMonsterCard1){
-            attacker = (MonsterCard)yourCard1;
-            System.out.println(attacker.toString());
-        }*/
-
-        /*if(e.getSource()==enemyMonsterCard1)
-        {
-            recipient = (MonsterCard)enemyMonsterCard1;
-            System.out.println(recipient.toString());
-            attack(attacker, recipient);
-        }*/
-
-        for(Card c : yourMonsterCards)
+        for(Card c : yourMonsterCards)//start attack event handling
         {
             if(e.getSource()==c && c.isInPlay())
             {
                 attacker = (MonsterCard)c;
+
+                if(enemyMonsterCards.size()==0)
+                {
+                    JOptionPane.showMessageDialog(null,"Direct Attack");
+                    recipient = new MonsterCard("","",0,0);
+                    attack(attacker,recipient);
+                }
             }
         }
 
@@ -342,7 +364,7 @@ public class GameGUI extends JFrame implements MouseListener{
                 recipient=(MonsterCard)c;
                 attack(attacker,recipient);
             }
-        }
+        }//end card attack handling
 
         if(e.getSource()==yourDeck)//start deck event handling
         {
