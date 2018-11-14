@@ -30,6 +30,9 @@ public class Deck{
         MonsterCard shadowOfYharnam = new MonsterCard("Shadow.png", "Shadow Of Yharnam", 5,5);
         allCards.add(shadowOfYharnam);
 
+        MagicCard bloodVial = new MagicCard("Shadow.png","Blood Vial",CardEffect.heal);
+        allCards.add(bloodVial);
+
         setMaxNoCards(allCards);
         setCurrentCards(maxNoCards);
         shuffle();

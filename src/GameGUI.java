@@ -87,8 +87,6 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyHeldCards = new ArrayList<>();
 
         enemyDeck = new JPanel();
-        enemyCardCount = new JLabel(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
-        enemyDeck.add(enemyCardCount);
         enemyHealthDisplay = new JLabel("HP: "+enemyHealth);
         enemyDeck.add(enemyHealthDisplay);
         enemyDeck.setBackground(Color.red);
@@ -126,6 +124,9 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyCardSlot1.add(card);
         enemyHeldCards.add(card);
         enemyHand.add(enemyCardSlot1);
+
+        enemyCardCount = new JLabel(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
+        enemyDeck.add(enemyCardCount);
 
         container.add(enemyHand);
         //end populate enemyHand
@@ -269,7 +270,6 @@ public class GameGUI extends JFrame implements MouseListener{
         if(recipient.getHealth()<=0)
         {
             graveYard.add(recipient);
-            enemyMonsterCards.remove(recipient);
             updateEnemyHealth();
             if(enemyHealth<=0)
                 JOptionPane.showMessageDialog(null,"You Win!");
@@ -306,7 +306,19 @@ public class GameGUI extends JFrame implements MouseListener{
                 }
                 c.setSelected(true);
 
-                if(!c.isInPlay())
+                if(c instanceof MagicCard)
+                {
+                    yourEmptyHeldSlots.add((JPanel)c.getParent());
+                    System.out.print(c.toString());
+                    yourMagicSlot.add(c);
+                    yourHand.updateUI();
+                    JOptionPane.showMessageDialog(null,"wait");
+                    c.setSelected(false);
+                    graveYard.add(c);
+                    yourField.updateUI();
+                }
+
+                else if(!c.isInPlay())
                 {
                     for(JPanel j : yourMonsterSlots)
                     {

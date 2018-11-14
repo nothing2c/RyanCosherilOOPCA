@@ -1,5 +1,3 @@
-
-
 public class MonsterCard extends Card {
 
     private int health;
