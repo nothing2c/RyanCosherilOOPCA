@@ -30,8 +30,11 @@ public class Deck{
         MonsterCard shadowOfYharnam = new MonsterCard("Shadow.png", "Shadow Of Yharnam", 5,5);
         allCards.add(shadowOfYharnam);
 
-        MagicCard bloodVial = new MagicCard("Shadow.png","Blood Vial",CardEffect.heal);
+        MagicCard bloodVial = new MagicCard("BloodVial.jpg","Blood Vial",'h',"Heals the user for 10 points",10);
         allCards.add(bloodVial);
+
+        MagicCard molotov = new MagicCard("Molotov.jpg","molotov",'d',"Damage the enemy for 10 points",-10);
+        allCards.add(molotov);
 
         setMaxNoCards(allCards);
         setCurrentCards(maxNoCards);

@@ -1,10 +1,17 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 
-public class GameGUI extends JFrame implements MouseListener{
+public class GameGUI extends JFrame{
+
+    ButtonEventHandler eventHandlerB;
+    MouseEventHandler eventHandlerM;
+    AI ai;
+    private boolean yourTurn;
 
     private Deck yourDeckOfCards;
     private Deck enemyDeckOfCards;
@@ -14,10 +21,14 @@ public class GameGUI extends JFrame implements MouseListener{
     private int enemyHealth;
     private JLabel enemyHealthDisplay;
 
+    private JButton endTurn;
+
     private JPanel graveYard;//used to remove killed monster cards from the field
 
     private ArrayList<Card> enemyHeldCards;
+    private ArrayList<JPanel> enemyEmptyHeldSlots;
     private ArrayList<Card> enemyMonsterCards;
+    private ArrayList<JPanel>emptyMonsterSlots;
     private ArrayList<Card> yourMonsterCards;
     private ArrayList<JPanel> yourMonsterSlots;
     private ArrayList<Card> yourHeldCards;
@@ -71,13 +82,19 @@ public class GameGUI extends JFrame implements MouseListener{
         setLocationRelativeTo(null);
         setTitle("TCG Borne");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(false);
         setLayout(new GridLayout(4,1,0,5));
 
         container = getContentPane();
 
+        yourTurn = true;
+
         yourDeckOfCards = new Deck();
         enemyDeckOfCards = new Deck();
         graveYard = new JPanel();
+        eventHandlerB = new ButtonEventHandler();
+        eventHandlerM = new MouseEventHandler();
+        ai=new AI();
 
         yourHealth = 50;
         enemyHealth = 50;
@@ -85,6 +102,7 @@ public class GameGUI extends JFrame implements MouseListener{
         //start populate enemyHand
         enemyHand = new JPanel(new GridLayout(1,7,5,0));
         enemyHeldCards = new ArrayList<>();
+        enemyEmptyHeldSlots = new ArrayList<>();
 
         enemyDeck = new JPanel();
         enemyHealthDisplay = new JLabel("HP: "+enemyHealth);
@@ -134,6 +152,7 @@ public class GameGUI extends JFrame implements MouseListener{
         //start populate enemyField
         enemyField = new JPanel(new GridLayout(1,7,5,0));
         enemyMonsterCards = new ArrayList<>();
+        emptyMonsterSlots = new ArrayList<>();
 
         padding = new JLabel();
         enemyField.add(padding);
@@ -142,19 +161,19 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyField.add(enemyMagicSlot);
 
         enemyMonsterSlot4 = new JPanel();
+        emptyMonsterSlots.add(enemyMonsterSlot4);
         enemyField.add(enemyMonsterSlot4);
 
         enemyMonsterSlot3 = new JPanel();
+        emptyMonsterSlots.add(enemyMonsterSlot3);
         enemyField.add(enemyMonsterSlot3);
 
         enemyMonsterSlot2 = new JPanel();
+        emptyMonsterSlots.add(enemyMonsterSlot2);
         enemyField.add(enemyMonsterSlot2);
 
         enemyMonsterSlot1 = new JPanel();
-        card = enemyDeckOfCards.draw();
-        card.addMouseListener(this);
-        enemyMonsterCards.add(card);
-        enemyMonsterSlot1.add(card);
+        emptyMonsterSlots.add(enemyMonsterSlot1);
         enemyField.add(enemyMonsterSlot1);
 
         padding = new JLabel();
@@ -172,27 +191,27 @@ public class GameGUI extends JFrame implements MouseListener{
         yourField.add(padding);
 
         yourMonsterSlot1 = new JPanel();
-        yourMonsterSlot1.addMouseListener(this);
+        yourMonsterSlot1.addMouseListener(eventHandlerM);
         yourMonsterSlots.add(yourMonsterSlot1);
         yourField.add(yourMonsterSlot1);
 
         yourMonsterSlot2 = new JPanel();
-        yourMonsterSlot2.addMouseListener(this);
+        yourMonsterSlot2.addMouseListener(eventHandlerM);
         yourMonsterSlots.add(yourMonsterSlot2);
         yourField.add(yourMonsterSlot2);
 
         yourMonsterSlot3 = new JPanel();
-        yourMonsterSlot3.addMouseListener(this);
+        yourMonsterSlot3.addMouseListener(eventHandlerM);
         yourMonsterSlots.add(yourMonsterSlot3);
         yourField.add(yourMonsterSlot3);
 
         yourMonsterSlot4 = new JPanel();
-        yourMonsterSlot4.addMouseListener(this);
+        yourMonsterSlot4.addMouseListener(eventHandlerM);
         yourMonsterSlots.add(yourMonsterSlot4);
         yourField.add(yourMonsterSlot4);
 
         yourMagicSlot = new JPanel();
-        yourMagicSlot.addMouseListener(this);
+        yourMagicSlot.addMouseListener(eventHandlerM);
         yourField.add(yourMagicSlot);
 
         padding = new JLabel();
@@ -208,35 +227,35 @@ public class GameGUI extends JFrame implements MouseListener{
 
         yourCardSlot1 = new JPanel();
         card = yourDeckOfCards.draw();
-        card.addMouseListener(this);
+        card.addMouseListener(eventHandlerM);
         yourHeldCards.add(card);
         yourCardSlot1.add(card);
         yourHand.add(yourCardSlot1);
 
         yourCardSlot2 = new JPanel();
         card = yourDeckOfCards.draw();
-        card.addMouseListener(this);
+        card.addMouseListener(eventHandlerM);
         yourHeldCards.add(card);
         yourCardSlot2.add(card);
         yourHand.add(yourCardSlot2);
 
         yourCardSlot3 = new JPanel();
         card = yourDeckOfCards.draw();
-        card.addMouseListener(this);
+        card.addMouseListener(eventHandlerM);
         yourHeldCards.add(card);
         yourCardSlot3.add(card);
         yourHand.add(yourCardSlot3);
 
         yourCardSlot4 = new JPanel();
         card = yourDeckOfCards.draw();
-        card.addMouseListener(this);
+        card.addMouseListener(eventHandlerM);
         yourHeldCards.add(card);
         yourCardSlot4.add(card);
         yourHand.add(yourCardSlot4);
 
         yourCardSlot5 = new JPanel();
         card = yourDeckOfCards.draw();
-        card.addMouseListener(this);
+        card.addMouseListener(eventHandlerM);
         yourHeldCards.add(card);
         yourCardSlot5.add(card);
         yourHand.add(yourCardSlot5);
@@ -249,7 +268,13 @@ public class GameGUI extends JFrame implements MouseListener{
         yourDeck.add(yourCardCount);
         yourHealthDisplay = new JLabel("HP: "+yourHealth);
         yourDeck.add(yourHealthDisplay);
-        yourDeck.addMouseListener(this);
+
+        endTurn = new JButton("End Turn");
+        endTurn.setSize(100,50);
+        endTurn.addActionListener(eventHandlerB);
+        yourDeck.add(endTurn);
+
+        yourDeck.addMouseListener(eventHandlerM);
         yourDeck.setBackground(Color.green);
         yourHand.add(yourDeck);
 
@@ -270,9 +295,8 @@ public class GameGUI extends JFrame implements MouseListener{
         if(recipient.getHealth()<=0)
         {
             graveYard.add(recipient);
-            updateEnemyHealth();
-            if(enemyHealth<=0)
-                JOptionPane.showMessageDialog(null,"You Win!");
+            recipient.setInPlay(false);
+            updateEnemyHealth(recipient.getHealth());
         }
         else
             recipient.setToolTipText(recipient.toString());
@@ -283,157 +307,254 @@ public class GameGUI extends JFrame implements MouseListener{
         enemyField.updateUI();
     }
 
-    public void updateEnemyHealth()
+    public boolean canDirectAttack(){
+        for(Card c : enemyMonsterCards)
+        {
+            if(c.isInPlay())
+                return false;
+        }
+
+        return true;
+    }
+
+    public void activateEffect(MagicCard c){
+        switch (c.getType()){
+            case 'h':yourHealth+=c.getEffect();
+            yourHealthDisplay.setText("HP: "+yourHealth);
+            JOptionPane.showMessageDialog(null,c.getDescription());
+            break;
+
+            case 'd':updateEnemyHealth(c.getEffect());
+        }
+    }
+
+    public void updateEnemyHealth(int damage)
     {
-        enemyHealth += recipient.getHealth();
+        enemyHealth += damage;
         if(enemyHealth<0)
+        {
             enemyHealth=0;
+            JOptionPane.showMessageDialog(null,"You Win!");
+        }
         enemyHealthDisplay.setText("HP: "+enemyHealth);
     }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        for(Card c : yourHeldCards)//start card select event handling
-        {
-            if(e.getSource()==c)
-            {
-                for(Card x : yourHeldCards)//used to deselect any cards that may have been previously selected
-                {
-                    if(x.isSelected())
-                    {
-                        x.setSelected(false);
-                    }
-                }
-                c.setSelected(true);
+    private class MouseEventHandler implements MouseListener {
 
-                if(c instanceof MagicCard)
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (yourTurn) {
+                for (Card c : yourHeldCards)//start card select event handling
                 {
-                    yourEmptyHeldSlots.add((JPanel)c.getParent());
-                    System.out.print(c.toString());
-                    yourMagicSlot.add(c);
-                    yourHand.updateUI();
-                    JOptionPane.showMessageDialog(null,"wait");
-                    c.setSelected(false);
-                    graveYard.add(c);
-                    yourField.updateUI();
-                }
-
-                else if(!c.isInPlay())
-                {
-                    for(JPanel j : yourMonsterSlots)
-                    {
-                        j.setBackground(Color.green);
-                    }
-                }
-            }
-        }//end card select event handling
-
-        for(JPanel j : yourMonsterSlots)//start card play event handling
-        {
-            if(e.getSource()==j)
-            {
-                for(Card c : yourHeldCards)
-                {
-                    if(c.isSelected()&&!c.isInPlay())
-                    {
-                        yourEmptyHeldSlots.add((JPanel)c.getParent());
-                        c.setSelected(false);
-                        c.setInPlay(true);
-                        j.add(c);
-                        yourMonsterCards.add(c);
-                        yourField.updateUI();
-                        yourHand.updateUI();
-
-                        for(JPanel p: yourMonsterSlots)
+                    if (e.getSource() == c) {
+                        for (Card x : yourHeldCards)//used to deselect any cards that may have been previously selected
                         {
-                            p.setBackground(container.getBackground());
+                            if (x.isSelected()) {
+                                x.setSelected(false);
+                            }
                         }
+                        c.setSelected(true);
 
+                        if (c instanceof MagicCard) {
+                            yourEmptyHeldSlots.add((JPanel) c.getParent());
+                            yourMagicSlot.add(c);
+                            yourHand.updateUI();
+                            activateEffect((MagicCard) c);
+                            c.setSelected(false);
+                            graveYard.add(c);
+                            yourField.updateUI();
+                        } else if (!c.isInPlay()) {
+                            for (JPanel j : yourMonsterSlots) {
+                                j.setBackground(Color.green);
+                            }
+                        }
+                    }
+                }//end card select event handling
+
+                for (JPanel j : yourMonsterSlots)//start card play event handling
+                {
+                    if (e.getSource() == j) {
+                        for (Card c : yourHeldCards) {
+                            if (c.isSelected() && !c.isInPlay()) {
+                                yourEmptyHeldSlots.add((JPanel) c.getParent());
+                                c.setSelected(false);
+                                c.setInPlay(true);
+                                j.add(c);
+                                yourMonsterCards.add(c);
+                                yourField.updateUI();
+                                yourHand.updateUI();
+
+                                for (JPanel p : yourMonsterSlots) {
+                                    p.setBackground(container.getBackground());
+                                }
+
+                            }
+                        }
+                    }
+                }//end card play event handling
+
+                for (Card c : yourMonsterCards)//start attack event handling
+                {
+                    if (e.getSource() == c && c.isInPlay()) {
+                        attacker = (MonsterCard) c;
+
+                        if (canDirectAttack()) {
+                            JOptionPane.showMessageDialog(null, "Direct Attack");
+                            recipient = new MonsterCard("", "", 0, 0);
+                            attack(attacker, recipient);
+                        }
+                    }
+                }
+
+                for (Card c : enemyMonsterCards) {
+                    if (e.getSource() == c && attacker != null) {
+                        recipient = (MonsterCard) c;
+                        attack(attacker, recipient);
+                    }
+                }//end card attack handling
+
+                if (e.getSource() == yourDeck)//start deck event handling
+                {
+                    if (yourDeckOfCards.getCurrentCards() > 0) {
+                        if (yourEmptyHeldSlots.size() > 0) {
+                            JPanel temp = yourEmptyHeldSlots.get(0);
+                            yourEmptyHeldSlots.remove(temp);
+                            card = yourDeckOfCards.draw();
+                            card.addMouseListener(this);
+                            yourHeldCards.add(card);
+                            temp.add(card);
+                            updateCardCount(yourCardCount);
+                        } else
+                            JOptionPane.showMessageDialog(null, "Your Hand Is Full");
+                    } else
+                        JOptionPane.showMessageDialog(null, "No Cards Remaining");
+                }//end deck event handling
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+            for (Card c : yourHeldCards) {
+                if (e.getSource() == c) {
+                    if (!c.isSelected()) {
+                        c.setBackground(Color.green);
                     }
                 }
             }
-        }//end card play event handling
+        }
 
-        for(Card c : yourMonsterCards)//start attack event handling
-        {
-            if(e.getSource()==c && c.isInPlay())
-            {
-                attacker = (MonsterCard)c;
-
-                if(enemyMonsterCards.size()==0)
-                {
-                    JOptionPane.showMessageDialog(null,"Direct Attack");
-                    recipient = new MonsterCard("","",0,0);
-                    attack(attacker,recipient);
+        @Override
+        public void mouseExited(MouseEvent e) {
+            for (Card c : yourHeldCards) {
+                if (e.getSource() == c) {
+                    if (!c.isSelected()) {
+                        c.setBackground(container.getBackground());
+                    }
                 }
             }
         }
+    }
 
-        for(Card c : enemyMonsterCards)
-        {
-            if(e.getSource()==c && attacker!=null)
-            {
-                recipient=(MonsterCard)c;
-                attack(attacker,recipient);
-            }
-        }//end card attack handling
+    private class ButtonEventHandler implements ActionListener{
 
-        if(e.getSource()==yourDeck)//start deck event handling
-        {
-            if(yourDeckOfCards.getCurrentCards()>0)
-            {
-                if(yourEmptyHeldSlots.size()>0)
-                {
-                    JPanel temp = yourEmptyHeldSlots.get(0);
-                    yourEmptyHeldSlots.remove(temp);
-                    card = yourDeckOfCards.draw();
-                    card.addMouseListener(this);
-                    yourHeldCards.add(card);
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JOptionPane.showMessageDialog(null,"End turn");
+            yourTurn=false;
+            ai.play();
+        }
+    }
+
+    private class AI{
+        public void play(){
+            drawCard();
+            JOptionPane.showMessageDialog(null,"wait");
+            playCard();
+            JOptionPane.showMessageDialog(null,"wait");
+            attack();
+            JOptionPane.showMessageDialog(null,"wait");
+            yourTurn=true;
+        }
+
+        public void drawCard(){
+            if(enemyDeckOfCards.getCurrentCards()>0) {
+                if (enemyEmptyHeldSlots.size()>0) {
+                    JPanel temp = enemyEmptyHeldSlots.get(0);
+                    enemyEmptyHeldSlots.remove(temp);
+                    card = enemyDeckOfCards.draw();
+                    enemyHeldCards.add(card);
                     temp.add(card);
-                    updateCardCount(yourCardCount);
-                }
-                else
-                    JOptionPane.showMessageDialog(null,"Your Hand Is Full");
-            }
-            else
-                JOptionPane.showMessageDialog(null,"No Cards Remaining");
-        }//end deck event handling
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-
-        for(Card c : yourHeldCards)
-        {
-            if(e.getSource()==c)
-            {
-                if(!c.isSelected())
-                {
-                    c.setBackground(Color.green);
+                    enemyCardCount.setText(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
                 }
             }
         }
-    }
 
-    @Override
-    public void mouseExited(MouseEvent e) {
-        for(Card c : yourHeldCards)
-        {
-            if(e.getSource()==c)
+        public void playCard(){
+            for(Card c : enemyHeldCards)
             {
-                if(!c.isSelected())
+                if(c instanceof MonsterCard && !c.isInPlay())
                 {
-                    c.setBackground(container.getBackground());
+                    if(emptyMonsterSlots.size()>0)
+                    {
+                        c.setInPlay(true);
+                        c.addMouseListener(eventHandlerM);
+                        enemyEmptyHeldSlots.add((JPanel)c.getParent());
+                        JPanel temp = emptyMonsterSlots.get(0);
+                        emptyMonsterSlots.remove(0);
+                        temp.add(c);
+                        enemyMonsterCards.add(c);
+                        enemyField.updateUI();
+                        enemyHand.updateUI();
+                        break;
+                    }
+                }
+            }
+        }
+
+        public void attack(){
+            for(Card c : enemyMonsterCards)
+            {
+                if(c.isInPlay())
+                {
+                    for(Card x : yourMonsterCards)
+                    {
+                        if(x.isInPlay())
+                        {
+                            MonsterCard attacker=(MonsterCard)c;
+                            MonsterCard recipient=(MonsterCard)x;
+
+                            recipient.setHealth(recipient.getHealth()-attacker.getAttack());
+
+                            if(recipient.getHealth()<=0)
+                            {
+                                graveYard.add(recipient);
+                                recipient.setInPlay(false);
+                                yourHealth += recipient.getHealth();
+                                if(yourHealth<0)
+                                {
+                                    yourHealth=0;
+                                    JOptionPane.showMessageDialog(null,"You Lose!");
+                                }
+                                yourHealthDisplay.setText("HP: "+yourHealth);
+                            }
+                            else
+                                recipient.setToolTipText(recipient.toString());
+
+                            attacker.setSelected(false);
+                            yourField.updateUI();
+                        }
+                    }
                 }
             }
         }
