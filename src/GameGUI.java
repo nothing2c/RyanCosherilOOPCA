@@ -5,7 +5,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
-
+/*many methods require you to specify whether its you or the AI performing the action by using the
+* boolean parameter 'yours*/
 public class GameGUI extends JFrame{
 
     ButtonEventHandler eventHandlerB;
@@ -284,65 +285,164 @@ public class GameGUI extends JFrame{
         setVisible(true);
     }
 
-    public void updateCardCount(JLabel cardCount){
-        if(cardCount == yourCardCount)
-            yourCardCount.setText(yourDeckOfCards.getCurrentCards()+" / "+yourDeckOfCards.getMaxNoCards());
+    public boolean canDrawCard(Deck deck, ArrayList emptySlots){
+        if(deck.getCurrentCards() > 0 && emptySlots.size() >0)
+            return true;
+        else
+            return false;
     }
 
-    public void attack(MonsterCard attacker, MonsterCard recipient){
+    public void drawCard(boolean yours){
+        if(yours)
+        {
+            JPanel temp = yourEmptyHeldSlots.get(0);
+            yourEmptyHeldSlots.remove(temp);
+            card = yourDeckOfCards.draw();
+            card.addMouseListener(eventHandlerM);
+            yourHeldCards.add(card);
+            temp.add(card);
+        }
+
+        else
+        {
+            JPanel temp = enemyEmptyHeldSlots.get(0);
+            enemyEmptyHeldSlots.remove(temp);
+            card = enemyDeckOfCards.draw();
+            card.addMouseListener(eventHandlerM);
+            enemyHeldCards.add(card);
+            temp.add(card);
+        }
+        updateCardCount(yours);
+
+    }
+
+    public void updateCardCount(boolean yours){
+        if(yours)
+            yourCardCount.setText(yourDeckOfCards.getCurrentCards()+" / "+yourDeckOfCards.getMaxNoCards());
+        else
+            enemyCardCount.setText(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
+    }
+
+    public void setAttacker(MonsterCard attacker) {
+        this.attacker = attacker;
+    }
+
+    public MonsterCard getAttacker() {
+        return attacker;
+    }
+
+    public void setRecipient(MonsterCard recipient) {
+        this.recipient = recipient;
+    }
+
+    public MonsterCard getRecipient() {
+        return recipient;
+    }
+
+    public void destroy (MonsterCard deadCard){
+        graveYard.add(deadCard);
+        deadCard.setInPlay(false);
+    }
+
+    public void attack(MonsterCard attacker, MonsterCard recipient, boolean yours){//begin attack
         recipient.setHealth(recipient.getHealth()-attacker.getAttack());
 
-        if(recipient.getHealth()<=0)
+        if(yours)
         {
-            graveYard.add(recipient);
-            recipient.setInPlay(false);
-            updateEnemyHealth(recipient.getHealth());
+            if(recipient.getHealth()<=0)
+            {
+                destroy(recipient);
+                updateHealth(recipient.getHealth(), false);
+            }
+            else
+                recipient.setToolTipText(recipient.toString());
+
+            attacker.setSelected(false);
+            this.attacker=null;
+            this.recipient=null;
+            enemyField.updateUI();
         }
         else
-            recipient.setToolTipText(recipient.toString());
-
-        attacker.setSelected(false);
-        this.attacker=null;
-        this.recipient=null;
-        enemyField.updateUI();
-    }
-
-    public boolean canDirectAttack(){
-        for(Card c : enemyMonsterCards)
         {
-            if(c.isInPlay())
-                return false;
+            if(recipient.getHealth()<=0)
+            {
+                destroy(recipient);
+                updateHealth(recipient.getHealth(), true);
+            }
+            else
+                recipient.setToolTipText(recipient.toString());
+
+            attacker.setSelected(false);
+            this.attacker=null;
+            this.recipient=null;
+            yourField.updateUI();
         }
+    }//end attack
 
-        return true;
-    }
+    public boolean canDirectAttack(char player){//begin canDirectAttack
+        if(player=='Y')
+        {
+            for(Card c : enemyMonsterCards)
+            {
+                if(c.isInPlay())
+                    return false;
+            }
+            return true;
+        }
+        else
+        {
+            for(Card c : yourMonsterCards)
+            {
+                if(c.isInPlay())
+                    return false;
+            }
+            return true;
+        }
+    }//end canDirectAttack
 
-    public void activateEffect(MagicCard c){
+    public void directAttack(boolean yours){//begin directAttack
+        JOptionPane.showMessageDialog(null, "Direct Attack");
+        recipient = new MonsterCard("", "", 0, 0);
+        attack(attacker, recipient, yours);
+    }//end directAttack
+
+    public void activateEffect(MagicCard c){//begin ActivateEffect
         switch (c.getType()){
             case 'h':yourHealth+=c.getEffect();
             yourHealthDisplay.setText("HP: "+yourHealth);
             JOptionPane.showMessageDialog(null,c.getDescription());
             break;
 
-            case 'd':updateEnemyHealth(c.getEffect());
+            case 'd':updateHealth(c.getEffect(),false);
         }
-    }
+    }//end activateEffect
 
-    public void updateEnemyHealth(int damage)
-    {
-        enemyHealth += damage;
-        if(enemyHealth<0)
+    public void updateHealth(int damage, boolean yours){//begin updateHealth
+        if(!yours)
         {
-            enemyHealth=0;
-            JOptionPane.showMessageDialog(null,"You Win!");
+            enemyHealth += damage;
+            if(enemyHealth<0)
+            {
+                enemyHealth=0;
+                JOptionPane.showMessageDialog(null,"You Win!");
+            }
+            enemyHealthDisplay.setText("HP: "+enemyHealth);
         }
-        enemyHealthDisplay.setText("HP: "+enemyHealth);
-    }
 
-    private class MouseEventHandler implements MouseListener {
+        else
+        {
+            yourHealth += damage;
+            if (yourHealth < 0) {
+                yourHealth = 0;
+                JOptionPane.showMessageDialog(null, "You Lose!");
+            }
+            yourHealthDisplay.setText("HP: " + yourHealth);
+        }
+    }//end updateHealth
 
+    private class MouseEventHandler implements MouseListener {//begin MouseEventHandler
         @Override
-        public void mouseClicked(MouseEvent e) {
+        public void mouseClicked(MouseEvent e) {//begin mouseClicked
             if (yourTurn) {
                 for (Card c : yourHeldCards)//start card select event handling
                 {
@@ -396,41 +496,29 @@ public class GameGUI extends JFrame{
                 for (Card c : yourMonsterCards)//start attack event handling
                 {
                     if (e.getSource() == c && c.isInPlay()) {
-                        attacker = (MonsterCard) c;
+                        setAttacker((MonsterCard) c);
 
-                        if (canDirectAttack()) {
-                            JOptionPane.showMessageDialog(null, "Direct Attack");
-                            recipient = new MonsterCard("", "", 0, 0);
-                            attack(attacker, recipient);
-                        }
+                        if (canDirectAttack('Y'))
+                            directAttack(true);
                     }
                 }
 
                 for (Card c : enemyMonsterCards) {
                     if (e.getSource() == c && attacker != null) {
-                        recipient = (MonsterCard) c;
-                        attack(attacker, recipient);
+                        setRecipient((MonsterCard)c);
+                        attack(attacker, recipient,true);
                     }
                 }//end card attack handling
 
                 if (e.getSource() == yourDeck)//start deck event handling
                 {
-                    if (yourDeckOfCards.getCurrentCards() > 0) {
-                        if (yourEmptyHeldSlots.size() > 0) {
-                            JPanel temp = yourEmptyHeldSlots.get(0);
-                            yourEmptyHeldSlots.remove(temp);
-                            card = yourDeckOfCards.draw();
-                            card.addMouseListener(this);
-                            yourHeldCards.add(card);
-                            temp.add(card);
-                            updateCardCount(yourCardCount);
-                        } else
-                            JOptionPane.showMessageDialog(null, "Your Hand Is Full");
-                    } else
-                        JOptionPane.showMessageDialog(null, "No Cards Remaining");
+                    if(canDrawCard(yourDeckOfCards, yourEmptyHeldSlots))
+                        drawCard(true);
+                     else
+                        JOptionPane.showMessageDialog(null, "You cannot draw a card");
                 }//end deck event handling
             }
-        }
+        }//end mouseClicked
 
         @Override
         public void mousePressed(MouseEvent e) {
@@ -443,7 +531,7 @@ public class GameGUI extends JFrame{
         }
 
         @Override
-        public void mouseEntered(MouseEvent e) {
+        public void mouseEntered(MouseEvent e) {//begin mouseEntered
 
             for (Card c : yourHeldCards) {
                 if (e.getSource() == c) {
@@ -452,10 +540,10 @@ public class GameGUI extends JFrame{
                     }
                 }
             }
-        }
+        }//end MouseEntered
 
         @Override
-        public void mouseExited(MouseEvent e) {
+        public void mouseExited(MouseEvent e) {//begin mouseExited
             for (Card c : yourHeldCards) {
                 if (e.getSource() == c) {
                     if (!c.isSelected()) {
@@ -463,8 +551,8 @@ public class GameGUI extends JFrame{
                     }
                 }
             }
-        }
-    }
+        }//end MouseExited
+    }//end MouseEventHandler
 
     private class ButtonEventHandler implements ActionListener{
 
@@ -478,26 +566,31 @@ public class GameGUI extends JFrame{
 
     private class AI{
         public void play(){
-            drawCard();
-            JOptionPane.showMessageDialog(null,"wait");
-            playCard();
-            JOptionPane.showMessageDialog(null,"wait");
-            attack();
-            JOptionPane.showMessageDialog(null,"wait");
-            yourTurn=true;
-        }
+            if(canDrawCard(enemyDeckOfCards, enemyEmptyHeldSlots))
+                drawCard(false);
 
-        public void drawCard(){
-            if(enemyDeckOfCards.getCurrentCards()>0) {
-                if (enemyEmptyHeldSlots.size()>0) {
-                    JPanel temp = enemyEmptyHeldSlots.get(0);
-                    enemyEmptyHeldSlots.remove(temp);
-                    card = enemyDeckOfCards.draw();
-                    enemyHeldCards.add(card);
-                    temp.add(card);
-                    enemyCardCount.setText(enemyDeckOfCards.getCurrentCards()+" / "+enemyDeckOfCards.getMaxNoCards());
-                }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
             }
+
+            playCard();
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+
+            prepareAttacks();
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+            yourTurn=true;
         }
 
         public void playCard(){
@@ -522,37 +615,18 @@ public class GameGUI extends JFrame{
             }
         }
 
-        public void attack(){
-            for(Card c : enemyMonsterCards)
+        public void prepareAttacks(){
+            for(Card c : enemyMonsterCards)//begin to select enemy MonsterCard
             {
-                if(c.isInPlay())
+                MonsterCard attacker=(MonsterCard)c;
+                if(attacker.getHealth()>0)
                 {
-                    for(Card x : yourMonsterCards)
+                    for(Card x : yourMonsterCards)//begin to select your MonsterCard
                     {
                         if(x.isInPlay())
                         {
-                            MonsterCard attacker=(MonsterCard)c;
                             MonsterCard recipient=(MonsterCard)x;
-
-                            recipient.setHealth(recipient.getHealth()-attacker.getAttack());
-
-                            if(recipient.getHealth()<=0)
-                            {
-                                graveYard.add(recipient);
-                                recipient.setInPlay(false);
-                                yourHealth += recipient.getHealth();
-                                if(yourHealth<0)
-                                {
-                                    yourHealth=0;
-                                    JOptionPane.showMessageDialog(null,"You Lose!");
-                                }
-                                yourHealthDisplay.setText("HP: "+yourHealth);
-                            }
-                            else
-                                recipient.setToolTipText(recipient.toString());
-
-                            attacker.setSelected(false);
-                            yourField.updateUI();
+                            attack(attacker, recipient, false);
                         }
                     }
                 }
