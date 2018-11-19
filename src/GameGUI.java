@@ -339,9 +339,15 @@ public class GameGUI extends JFrame{
         return recipient;
     }
 
-    public void destroy (MonsterCard deadCard){
+    public void destroy (MonsterCard deadCard, boolean yours){
+
         graveYard.add(deadCard);
         deadCard.setInPlay(false);
+
+        if(!yours)
+            yourHeldCards.remove(deadCard);
+        else
+            enemyHeldCards.remove(deadCard);
     }
 
     public void attack(MonsterCard attacker, MonsterCard recipient, boolean yours){//begin attack
@@ -351,7 +357,7 @@ public class GameGUI extends JFrame{
         {
             if(recipient.getHealth()<=0)
             {
-                destroy(recipient);
+                destroy(recipient, false);
                 updateHealth(recipient.getHealth(), false);
             }
             else
@@ -366,7 +372,7 @@ public class GameGUI extends JFrame{
         {
             if(recipient.getHealth()<=0)
             {
-                destroy(recipient);
+                destroy(recipient, true);
                 updateHealth(recipient.getHealth(), true);
             }
             else
@@ -377,10 +383,12 @@ public class GameGUI extends JFrame{
             this.recipient=null;
             yourField.updateUI();
         }
+
+        System.out.println(attacker.toString()+"   "+recipient.toString());
     }//end attack
 
-    public boolean canDirectAttack(char player){//begin canDirectAttack
-        if(player=='Y')
+    public boolean canDirectAttack(boolean yours){//begin canDirectAttack
+        if(yours)
         {
             for(Card c : enemyMonsterCards)
             {
@@ -498,7 +506,7 @@ public class GameGUI extends JFrame{
                     if (e.getSource() == c && c.isInPlay()) {
                         setAttacker((MonsterCard) c);
 
-                        if (canDirectAttack('Y'))
+                        if (canDirectAttack(true))
                             directAttack(true);
                     }
                 }
@@ -596,21 +604,26 @@ public class GameGUI extends JFrame{
         public void playCard(){
             for(Card c : enemyHeldCards)
             {
-                if(c instanceof MonsterCard && !c.isInPlay())
+                if(c instanceof MonsterCard)
                 {
-                    if(emptyMonsterSlots.size()>0)
+                    MonsterCard monsterToPlay = (MonsterCard)c;
+                    if(monsterToPlay.getHealth()>0)//used to ensure card is not in graveyard
                     {
-                        c.setInPlay(true);
-                        c.addMouseListener(eventHandlerM);
-                        enemyEmptyHeldSlots.add((JPanel)c.getParent());
-                        JPanel temp = emptyMonsterSlots.get(0);
-                        emptyMonsterSlots.remove(0);
-                        temp.add(c);
-                        enemyMonsterCards.add(c);
-                        enemyField.updateUI();
-                        enemyHand.updateUI();
-                        break;
+                        if(emptyMonsterSlots.size()>0)
+                        {
+                            c.setInPlay(true);
+                            c.addMouseListener(eventHandlerM);
+                            enemyEmptyHeldSlots.add((JPanel)c.getParent());
+                            JPanel temp = emptyMonsterSlots.get(0);
+                            emptyMonsterSlots.remove(0);
+                            temp.add(c);
+                            enemyMonsterCards.add(c);
+                            enemyField.updateUI();
+                            enemyHand.updateUI();
+                            break;
+                        }
                     }
+
                 }
             }
         }
@@ -618,15 +631,16 @@ public class GameGUI extends JFrame{
         public void prepareAttacks(){
             for(Card c : enemyMonsterCards)//begin to select enemy MonsterCard
             {
-                MonsterCard attacker=(MonsterCard)c;
+                attacker=(MonsterCard)c;
                 if(attacker.getHealth()>0)
                 {
                     for(Card x : yourMonsterCards)//begin to select your MonsterCard
                     {
                         if(x.isInPlay())
                         {
-                            MonsterCard recipient=(MonsterCard)x;
+                            recipient=(MonsterCard)x;
                             attack(attacker, recipient, false);
+                            break;
                         }
                     }
                 }
