@@ -1,8 +1,9 @@
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Deck{
+public class Deck implements Serializable {
 
-    private ArrayList<Card> allCards;
+    public ArrayList<Card> allCards;
     private int maxNoCards;
     private int currentCards;
 

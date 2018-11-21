@@ -15,6 +15,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
     private JButton loadDeck;
     private JButton deleteDeck;
     private JButton back;
+    private JTextArea cards;
 
     public EditDeckScreen(){
         setLayout(new FlowLayout());
@@ -56,6 +57,16 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         back.addActionListener(handlerE);
         add(back);
 
+        if(deck==null)
+            deck = new Deck();
+
+        cards = new JTextArea();
+        for(Card c : deck.allCards)
+        {
+            cards.append(c.toString()+"\n");
+        }
+        add(cards);
+
         setVisible(true);
     }
 
@@ -96,6 +107,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         }
         catch (IOException e)
         {
+            JOptionPane.showMessageDialog(null,"Cannot Load Deck");
             e.printStackTrace();
         }
         catch (ClassNotFoundException e)
@@ -124,7 +136,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
                 String choice="";
                 while(!valid)
                 {
-                    choice=JOptionPane.showInputDialog("What kind of card do you want to add?('Monster / Magic");
+                    choice=JOptionPane.showInputDialog("What kind of card do you want to add?('Monster / Magic)");
                     choice=choice.toLowerCase();
 
                     if(!(choice.equals("monster")||choice.equals("magic")))
@@ -137,20 +149,25 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
                 }
 
                 String name = JOptionPane.showInputDialog("Please enter the name of the card");
+                System.out.println(name);
                 String imagePath = JOptionPane.showInputDialog("Please enter the name of the image for the card (cardBack.png)");
+                System.out.println(imagePath);
 
                 if(choice.equals("monster"))
                 {
                     String attack = JOptionPane.showInputDialog("Please enter the attack of the card");
+                    System.out.println(attack);
                     String health = JOptionPane.showInputDialog("Please enter the health of the card");
+                    System.out.println(health);
 
                     try{
-                        MonsterCard card = new MonsterCard(name, imagePath, Integer.parseInt(attack), Integer.parseInt(health));
+                        MonsterCard card = new MonsterCard(imagePath, name, Integer.parseInt(attack), Integer.parseInt(health));
                         deck.addCard(card);
+                        cards.append(card.toString()+"\n");
+                        cards.updateUI();
                         JOptionPane.showMessageDialog(null,"Card successfully added");
                     }
-                    catch (Exception x)
-                    {
+                    catch(Exception x){
                         JOptionPane.showMessageDialog(null,"Cannot create card with these parameters");
                     }
                 }

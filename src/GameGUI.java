@@ -358,6 +358,7 @@ public class GameGUI extends JFrame{
             if(recipient.getHealth()<=0)
             {
                 destroy(recipient, false);
+                emptyMonsterSlots.add((JPanel)recipient.getParent());
                 updateHealth(recipient.getHealth(), false);
             }
             else
@@ -616,11 +617,12 @@ public class GameGUI extends JFrame{
                     {
                         if(emptyMonsterSlots.size()>0)
                         {
+                            System.out.println("hello");
                             c.setInPlay(true);
                             c.addMouseListener(eventHandlerM);
                             enemyEmptyHeldSlots.add((JPanel)c.getParent());
-                            JPanel temp = emptyMonsterSlots.get(0);
-                            emptyMonsterSlots.remove(0);
+                            JPanel temp = emptyMonsterSlots.get(0);          //here is where issues are <--------
+                            emptyMonsterSlots.remove(0);               //<-----------
                             temp.add(c);
                             enemyMonsterCards.add(c);
                             enemyField.updateUI();
