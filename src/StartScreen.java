@@ -41,8 +41,18 @@ public class StartScreen extends JFrame{
         public void actionPerformed(ActionEvent e) {
             if(e.getSource()==start)
             {
-                setVisible(false);
-                GameGUI gui = new GameGUI();
+                if(EditDeckScreen.deck!=null)
+                {
+                    setVisible(false);
+                    GameGUI gui = new GameGUI();
+                }
+
+                else
+                {
+                    EditDeckScreen.deck=new Deck();
+                    setVisible(false);
+                    GameGUI gui = new GameGUI();
+                }
             }
 
             if(e.getSource()==editDeck)

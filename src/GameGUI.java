@@ -90,7 +90,7 @@ public class GameGUI extends JFrame{
 
         yourTurn = true;
 
-        yourDeckOfCards = new Deck();
+        yourDeckOfCards = EditDeckScreen.deck;
         enemyDeckOfCards = new Deck();
         graveYard = new JPanel();
         eventHandlerB = new ButtonEventHandler();
@@ -433,6 +433,8 @@ public class GameGUI extends JFrame{
             {
                 enemyHealth=0;
                 JOptionPane.showMessageDialog(null,"You Win!");
+                setVisible(false);
+                StartScreen gui = new StartScreen();
             }
             enemyHealthDisplay.setText("HP: "+enemyHealth);
         }
@@ -440,9 +442,12 @@ public class GameGUI extends JFrame{
         else
         {
             yourHealth += damage;
-            if (yourHealth < 0) {
+            if (yourHealth < 0)
+            {
                 yourHealth = 0;
                 JOptionPane.showMessageDialog(null, "You Lose!");
+                setVisible(false);
+                StartScreen gui = new StartScreen();
             }
             yourHealthDisplay.setText("HP: " + yourHealth);
         }

@@ -70,8 +70,20 @@ public class Deck{
         allCards.add(card);
     }
 
-    public void removeCard(Card card){
-        allCards.remove(card);
+    public boolean removeCard(String name){
+        Card card;
+
+        for(Card c : allCards)
+        {
+            if(c.getName().equals(name))
+            {
+                card=c;
+                allCards.remove(card);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Card draw(){

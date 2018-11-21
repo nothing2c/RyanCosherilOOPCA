@@ -7,7 +7,7 @@ import java.io.*;
 public class EditDeckScreen extends JFrame{//start EditDeckScreen
 
     ButtonEventHandlerEdit handlerE;
-    public Deck deck;
+    public static Deck deck;
 
     private JButton addCard;
     private JButton removeCard;
@@ -67,6 +67,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             ObjectOutputStream oos = new ObjectOutputStream(fos);
             oos.writeObject(deck);
             oos.close();
+            JOptionPane.showMessageDialog(null,"Deck saved successfully");
         }
         catch (FileNotFoundException e)
         {
@@ -78,7 +79,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         }
     }
 
-    private void load(String deckName)
+    public static void load(String deckName)
     {
         File file = new File(deckName+".dat");
         try{
@@ -86,9 +87,11 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             ObjectInputStream ois = new ObjectInputStream(fis);
             deck=(Deck)ois.readObject();
             ois.close();
+            JOptionPane.showMessageDialog(null,"Deck Loaded successfully");
         }
         catch (FileNotFoundException e)
         {
+            JOptionPane.showMessageDialog(null,"Deck doesn't exist");
             e.printStackTrace();
         }
         catch (IOException e)
@@ -99,6 +102,17 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         {
             e.printStackTrace();
         }
+    }
+
+    public void delete(String name){//gotten from geeksforgeeks.com
+        File file = new File(name+".dat");
+        if(file.delete())
+        {
+            JOptionPane.showMessageDialog(null,"Deck deleted successfully");
+        }
+
+        else
+            JOptionPane.showMessageDialog(null,"Deck could not be deleted");
     }
 
     private class ButtonEventHandlerEdit implements ActionListener {//start ButtonEventHandlerEdit
@@ -162,7 +176,10 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             if(e.getSource()==removeCard)
             {
                 String name = JOptionPane.showInputDialog("Please enter the name of the card you want to remove");
-                //try(dec)
+                if(deck.removeCard(name))
+                    JOptionPane.showMessageDialog(null,"Card removed successfully");
+                else
+                    JOptionPane.showMessageDialog(null,"Card doesn't exist");
             }
 
             if(e.getSource()==saveDeck)
@@ -179,7 +196,8 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
 
             if(e.getSource()==deleteDeck)
             {
-
+                String name = JOptionPane.showInputDialog("Enter the name of the deck to delete");
+                delete(name);
             }
 
             if(e.getSource()==back)
