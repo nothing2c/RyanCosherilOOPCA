@@ -66,6 +66,14 @@ public class Deck{
         return currentCards;
     }
 
+    public void addCard(Card card){
+        allCards.add(card);
+    }
+
+    public void removeCard(Card card){
+        allCards.remove(card);
+    }
+
     public Card draw(){
         Card nextCard = allCards.get(maxNoCards-currentCards);
         setCurrentCards(currentCards-1);
