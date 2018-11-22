@@ -10,7 +10,6 @@ public class StartScreen extends JFrame{
 
     private JButton start;
     private JButton editDeck;
-    public Deck deck;
 
     public StartScreen(){
         setLayout(new FlowLayout());
@@ -19,6 +18,11 @@ public class StartScreen extends JFrame{
         setTitle("TCG Borne");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
+
+        if(EditDeckScreen.deck==null)
+            EditDeckScreen.deck=EditDeckScreen.load("deck");
+        else
+            EditDeckScreen.deck=EditDeckScreen.load(EditDeckScreen.playDeckName);
 
         handlerS = new ButtonEventHandlerStart();
 
@@ -50,6 +54,7 @@ public class StartScreen extends JFrame{
                 else
                 {
                     EditDeckScreen.deck=new Deck();
+                    System.out.println("Hello");
                     setVisible(false);
                     GameGUI gui = new GameGUI();
                 }

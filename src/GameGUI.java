@@ -1,9 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.ArrayList;
 /*many methods require you to specify whether its you or the AI performing the action by using the
 * boolean parameter 'yours*/
@@ -82,7 +79,20 @@ public class GameGUI extends JFrame{
         setSize(1300,950);
         setLocationRelativeTo(null);
         setTitle("TCG Borne");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+        addWindowListener(new WindowAdapter() {// gotten from https://coderanch.com/t/632603/java/Prompt-Exit-Single-Frame-Application
+            @Override
+            public void windowClosing(WindowEvent event) {
+                int choice=JOptionPane.showConfirmDialog(null,"Are you sure you want to exit");
+
+                if(choice==JOptionPane.YES_OPTION)
+                {
+                    setVisible(false);
+                    StartScreen gui = new StartScreen();
+                }
+            }
+        });
         setResizable(false);
         setLayout(new GridLayout(4,1,0,5));
 
@@ -90,8 +100,10 @@ public class GameGUI extends JFrame{
 
         yourTurn = true;
 
-        yourDeckOfCards = EditDeckScreen.deck;
+        yourDeckOfCards = EditDeckScreen.load(EditDeckScreen.playDeckName);
+        yourDeckOfCards.shuffle();
         enemyDeckOfCards = new Deck();
+        enemyDeckOfCards.shuffle();
         graveYard = new JPanel();
         eventHandlerB = new ButtonEventHandler();
         eventHandlerM = new MouseEventHandler();
@@ -357,8 +369,16 @@ public class GameGUI extends JFrame{
         {
             if(recipient.getHealth()<=0)
             {
+
+                for(Card c : enemyMonsterCards)
+                {
+                    if(c.equals(recipient))
+                    {
+                        System.out.println("yas");
+                        c.getParent().setBackground(container.getBackground());
+                    }
+                }
                 destroy(recipient, false);
-                emptyMonsterSlots.add((JPanel)recipient.getParent());
                 updateHealth(recipient.getHealth(), false);
             }
             else
@@ -613,22 +633,25 @@ public class GameGUI extends JFrame{
                 if(c instanceof MonsterCard)
                 {
                     MonsterCard monsterToPlay = (MonsterCard)c;
-                    if(monsterToPlay.getHealth()>0)//used to ensure card is not in graveyard
+                    if(monsterToPlay.getHealth()>0 && !monsterToPlay.isInPlay())//used to ensure card is not in graveyard
                     {
-                        if(emptyMonsterSlots.size()>0)
+                        for(JPanel j : emptyMonsterSlots)
                         {
-                            System.out.println("hello");
-                            c.setInPlay(true);
-                            c.addMouseListener(eventHandlerM);
-                            enemyEmptyHeldSlots.add((JPanel)c.getParent());
-                            JPanel temp = emptyMonsterSlots.get(0);          //here is where issues are <--------
-                            emptyMonsterSlots.remove(0);               //<-----------
-                            temp.add(c);
-                            enemyMonsterCards.add(c);
-                            enemyField.updateUI();
-                            enemyHand.updateUI();
-                            break;
+                            if(j.getBackground()!=Color.red)
+                            {
+                                c.setInPlay(true);
+                                c.addMouseListener(eventHandlerM);
+                                enemyEmptyHeldSlots.add((JPanel)c.getParent());
+                                JPanel temp = emptyMonsterSlots.get(emptyMonsterSlots.indexOf(j));          //here is where issues are <--------
+                                temp.setBackground(Color.red);               //<-----------
+                                temp.add(c);
+                                enemyMonsterCards.add(c);
+                                enemyField.updateUI();
+                                enemyHand.updateUI();
+                                break;
+                            }
                         }
+                        break;
                     }
 
                 }
@@ -641,13 +664,22 @@ public class GameGUI extends JFrame{
                 attacker=(MonsterCard)c;
                 if(attacker.getHealth()>0)
                 {
-                    for(Card x : yourMonsterCards)//begin to select your MonsterCard
+                    if(canDirectAttack(false))
                     {
-                        if(x.isInPlay())
-                        {
-                            recipient=(MonsterCard)x;
-                            attack(attacker, recipient, false);
+                        directAttack(false);
+                        if(yourHealth<=0)
                             break;
+                    }
+                    else
+                    {
+                        for(Card x : yourMonsterCards)//begin to select your MonsterCard
+                        {
+                            if(x.isInPlay())
+                            {
+                                recipient=(MonsterCard)x;
+                                attack(attacker, recipient, false);
+                                break;
+                            }
                         }
                     }
                 }

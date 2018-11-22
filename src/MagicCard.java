@@ -12,7 +12,7 @@ public class MagicCard extends Card {
     }
 
     public String toString(){
-        return getDescription();
+        return "Name: "+getName()+"    Description: "+getDescription();
     }
 
     public void setDescription(String description) {

@@ -8,6 +8,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
 
     ButtonEventHandlerEdit handlerE;
     public static Deck deck;
+    public static String playDeckName;
 
     private JButton addCard;
     private JButton removeCard;
@@ -57,14 +58,8 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         back.addActionListener(handlerE);
         add(back);
 
-        if(deck==null)
-            deck = new Deck();
-
         cards = new JTextArea();
-        for(Card c : deck.allCards)
-        {
-            cards.append(c.toString()+"\n");
-        }
+        updateText();
         add(cards);
 
         setVisible(true);
@@ -72,25 +67,44 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
 
     private void save(Deck deck, String deckName)
     {
+        boolean proceed=true;
         File file = new File(deckName+".dat");
-        try{
-            FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-            oos.writeObject(deck);
-            oos.close();
-            JOptionPane.showMessageDialog(null,"Deck saved successfully");
-        }
-        catch (FileNotFoundException e)
+        if(file.exists())// gotten from stack overflow
         {
-            e.printStackTrace();
+            int choice=JOptionPane.showConfirmDialog(null,"Deck already exists. Do you want to overwrite it?");
+
+            if(choice==JOptionPane.YES_OPTION)
+            {
+                proceed = true;
+            }
+            else
+                proceed=false;
         }
-        catch (IOException e)
+
+        if(proceed==true)
         {
-            e.printStackTrace();
+            try{
+                FileOutputStream fos = new FileOutputStream(file);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(deck);
+                oos.close();
+                JOptionPane.showMessageDialog(null,"Deck saved successfully");
+                this.deck=deck;
+                playDeckName=deckName;
+            }
+            catch (FileNotFoundException e)
+            {
+                e.printStackTrace();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
         }
+
     }
 
-    public static void load(String deckName)
+    public static Deck load(String deckName)
     {
         File file = new File(deckName+".dat");
         try{
@@ -99,6 +113,8 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             deck=(Deck)ois.readObject();
             ois.close();
             JOptionPane.showMessageDialog(null,"Deck Loaded successfully");
+            playDeckName=deckName;
+            return deck;
         }
         catch (FileNotFoundException e)
         {
@@ -114,6 +130,8 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         {
             e.printStackTrace();
         }
+
+        return null;
     }
 
     public void delete(String name){//gotten from geeksforgeeks.com
@@ -121,10 +139,20 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
         if(file.delete())
         {
             JOptionPane.showMessageDialog(null,"Deck deleted successfully");
-        }
 
+            if(name.equals(playDeckName))
+                deck=load("deck");
+        }
         else
             JOptionPane.showMessageDialog(null,"Deck could not be deleted");
+    }
+
+    private void updateText(){
+        cards.setText("Cards\n");
+        for(Card c : deck.getAllCards())
+        {
+            cards.append("\n"+c.toString());
+        }
     }
 
     private class ButtonEventHandlerEdit implements ActionListener {//start ButtonEventHandlerEdit
@@ -133,15 +161,18 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             if(e.getSource()==addCard)
             {
                 boolean valid=false;
-                String choice="";
+                String choice;
+
+                choice=JOptionPane.showInputDialog("What kind of card do you want to add?('Monster / Magic)");
+                choice=choice.toLowerCase();
+                if(!(choice.equals("monster")||choice.equals("magic")))
+                    valid=false;
+
                 while(!valid)
                 {
-                    choice=JOptionPane.showInputDialog("What kind of card do you want to add?('Monster / Magic)");
-                    choice=choice.toLowerCase();
-
                     if(!(choice.equals("monster")||choice.equals("magic")))
                     {
-                        choice=JOptionPane.showInputDialog("Not a valid card type('Monster / Magic");
+                        choice=JOptionPane.showInputDialog("Not a valid card type('Monster / Magic)");
                         choice=choice.toLowerCase();
                     }
                     else
@@ -149,38 +180,36 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
                 }
 
                 String name = JOptionPane.showInputDialog("Please enter the name of the card");
-                System.out.println(name);
                 String imagePath = JOptionPane.showInputDialog("Please enter the name of the image for the card (cardBack.png)");
-                System.out.println(imagePath);
+                imagePath="cardBack.png"; //cheating to ensure no crashes for invalid image
 
                 if(choice.equals("monster"))
                 {
                     String attack = JOptionPane.showInputDialog("Please enter the attack of the card");
-                    System.out.println(attack);
                     String health = JOptionPane.showInputDialog("Please enter the health of the card");
-                    System.out.println(health);
 
                     try{
                         MonsterCard card = new MonsterCard(imagePath, name, Integer.parseInt(attack), Integer.parseInt(health));
                         deck.addCard(card);
-                        cards.append(card.toString()+"\n");
-                        cards.updateUI();
+                        updateText();
                         JOptionPane.showMessageDialog(null,"Card successfully added");
                     }
                     catch(Exception x){
                         JOptionPane.showMessageDialog(null,"Cannot create card with these parameters");
+                        x.printStackTrace();
                     }
                 }
 
                 else
                 {
-                    String type = JOptionPane.showInputDialog("Please enter the type of effect the card has('h' / 'd'");
+                    String type = JOptionPane.showInputDialog("Please enter the type of effect the card has('h' / 'd')");
                     String desc = JOptionPane.showInputDialog("Please enter the description of the card");
                     String effect = JOptionPane.showInputDialog("Please enter the effect of the effect(integer)");
 
                     try{
-                        MagicCard card = new MagicCard(name, imagePath, type.charAt(0),desc,Integer.parseInt(effect));
+                        MagicCard card = new MagicCard(imagePath, name, type.charAt(0),desc,Integer.parseInt(effect));
                         deck.addCard(card);
+                        updateText();
                         JOptionPane.showMessageDialog(null,"Card successfully added");
                     }
                     catch (Exception x)
@@ -194,7 +223,10 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             {
                 String name = JOptionPane.showInputDialog("Please enter the name of the card you want to remove");
                 if(deck.removeCard(name))
+                {
                     JOptionPane.showMessageDialog(null,"Card removed successfully");
+                    updateText();
+                }
                 else
                     JOptionPane.showMessageDialog(null,"Card doesn't exist");
             }
@@ -202,6 +234,10 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             if(e.getSource()==saveDeck)
             {
                 String name = JOptionPane.showInputDialog("Enter the name of the deck");
+                while (name.equals("deck"))
+                {
+                    name = JOptionPane.showInputDialog("Cannot save with this name. Enter another name");
+                }
                 save(deck, name);
             }
 
@@ -209,16 +245,34 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             {
                 String name = JOptionPane.showInputDialog("Enter the name of the deck to load");
                 load(name);
+                playDeckName=name;
+                updateText();
             }
 
             if(e.getSource()==deleteDeck)
             {
                 String name = JOptionPane.showInputDialog("Enter the name of the deck to delete");
+                while (name.equals("deck"))
+                {
+                    name = JOptionPane.showInputDialog("Cannot delete this deck. Enter another name");
+                }
                 delete(name);
+                updateText();
             }
 
             if(e.getSource()==back)
             {
+                int choice=JOptionPane.showConfirmDialog(null,"Do you want to save before exit");
+
+                if(choice==JOptionPane.YES_OPTION)
+                {
+                    String name = JOptionPane.showInputDialog("Enter the name of the deck");
+                    while (name.equals("deck"))
+                    {
+                        name = JOptionPane.showInputDialog("Cannot save with this name. Enter another name");
+                    }
+                    save(deck, name);
+                }
                 setVisible(false);
                 StartScreen gui = new StartScreen();
             }

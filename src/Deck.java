@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 public class Deck implements Serializable {
 
-    public ArrayList<Card> allCards;
+    private ArrayList<Card> allCards;
     private int maxNoCards;
     private int currentCards;
 
@@ -37,9 +37,8 @@ public class Deck implements Serializable {
         MagicCard molotov = new MagicCard("Molotov.jpg","molotov",'d',"Damage the enemy for 10 points",-10);
         allCards.add(molotov);
 
-        setMaxNoCards(allCards);
+        setMaxNoCards(allCards.size());
         setCurrentCards(maxNoCards);
-        shuffle();
     }
 
     public Card get(String name){
@@ -51,7 +50,11 @@ public class Deck implements Serializable {
         return null;
     }
 
-    public void setMaxNoCards(ArrayList<Card> allCards) {
+    public ArrayList<Card> getAllCards() {
+        return allCards;
+    }
+
+    public void setMaxNoCards(int size) {
         this.maxNoCards = allCards.size();
     }
 
@@ -68,7 +71,12 @@ public class Deck implements Serializable {
     }
 
     public void addCard(Card card){
-        allCards.add(card);
+        if(card instanceof MonsterCard)
+            allCards.add((MonsterCard)card);
+        else
+            allCards.add((MagicCard)card);
+
+        setMaxNoCards(getMaxNoCards()+1);
     }
 
     public boolean removeCard(String name){
@@ -80,6 +88,7 @@ public class Deck implements Serializable {
             {
                 card=c;
                 allCards.remove(card);
+                setMaxNoCards(getMaxNoCards()-1);
                 return true;
             }
         }
@@ -88,12 +97,13 @@ public class Deck implements Serializable {
     }
 
     public Card draw(){
+        System.out.println(maxNoCards+" "+currentCards);
         Card nextCard = allCards.get(maxNoCards-currentCards);
         setCurrentCards(currentCards-1);
         return nextCard;
     }
 
-    private void shuffle()
+    public void shuffle()
     {
         for(int i=0; i<allCards.size(); i++)
         {
