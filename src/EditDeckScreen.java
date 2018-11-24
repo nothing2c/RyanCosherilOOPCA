@@ -81,7 +81,7 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
                 proceed=false;
         }
 
-        if(proceed==true)
+        if(proceed)
         {
             try{
                 FileOutputStream fos = new FileOutputStream(file);

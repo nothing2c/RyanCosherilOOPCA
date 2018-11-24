@@ -2,6 +2,7 @@ public class MonsterCard extends Card {
 
     private int health;
     private int attack;
+    private boolean hasAttacked;
 
     public MonsterCard(String imagePath, String name, int attack, int health){
         super(imagePath, name);
@@ -14,6 +15,13 @@ public class MonsterCard extends Card {
         return "Name: " + super.getName() + "    Attack: " + getAttack() + "    Health: " + getHealth();
     }
 
+    public void setHasAttacked(boolean hasAttacked) {
+        this.hasAttacked = hasAttacked;
+    }
+
+    public boolean getHasAttacked(){
+        return hasAttacked;
+    }
 
     public void setAttack(int attack) {
         this.attack = attack;

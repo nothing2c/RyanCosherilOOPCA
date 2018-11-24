@@ -2,6 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
 /*many methods require you to specify whether its you or the AI performing the action by using the
 * boolean parameter 'yours*/
 public class GameGUI extends JFrame{
@@ -9,7 +12,7 @@ public class GameGUI extends JFrame{
     ButtonEventHandler eventHandlerB;
     MouseEventHandler eventHandlerM;
     AI ai;
-    private boolean yourTurn;
+    private boolean yourTurn;//used to determine whether or not mouse events can be performed
 
     private Deck yourDeckOfCards;
     private Deck enemyDeckOfCards;
@@ -23,9 +26,9 @@ public class GameGUI extends JFrame{
 
     private JPanel graveYard;//used to remove killed monster cards from the field
 
-    private ArrayList<Card> enemyHeldCards;
-    private ArrayList<JPanel> enemyEmptyHeldSlots;
-    private ArrayList<Card> enemyMonsterCards;
+    private ArrayList<Card> enemyHeldCards;                 //pretty sure half of the arrays are redundant but its to
+    private ArrayList<JPanel> enemyEmptyHeldSlots;          //late for me to check (monsterCard arrays contain almost identical elements
+    private ArrayList<Card> enemyMonsterCards;              //to heldCard arrays
     private ArrayList<JPanel>emptyMonsterSlots;
     private ArrayList<Card> yourMonsterCards;
     private ArrayList<JPanel> yourMonsterSlots;
@@ -41,16 +44,20 @@ public class GameGUI extends JFrame{
     private Container container;
 
     private Card card;
+    private boolean drawnCard;              //these to boolean values are used to make sure
+    private boolean playedMonster;          //the player plays by the rules
 
-    private JPanel enemyHand;
-    private JPanel enemyField;
-    private JPanel yourField;
-    private JPanel yourHand;
+    private JPanel enemyHand;               //these are 4 broad
+    private JPanel enemyField;              //JPanels that contain
+    private JPanel yourField;               //each possible
+    private JPanel yourHand;                //card slot
 
-    private JLabel padding;
+    private JLabel padding;//used to add empty space to grid layout
 
-    private JPanel enemyDeck;
-    private JPanel enemyCardSlot5;
+    private JTextArea damageLog;
+
+    private JPanel enemyDeck;               //The following JLabels are used to set each possible slot for a card
+    private JPanel enemyCardSlot5;          //(not sure if they all need unique references but not going to check)
     private JPanel enemyCardSlot4;
     private JPanel enemyCardSlot3;
     private JPanel enemyCardSlot2;
@@ -93,14 +100,17 @@ public class GameGUI extends JFrame{
                 }
             }
         });
+
         setResizable(false);
         setLayout(new GridLayout(4,1,0,5));
 
         container = getContentPane();
 
-        yourTurn = true;
+        if(EditDeckScreen.playDeckName==null)//checks if a deck is loaded to play. if not, instantiates a new Deck
+            yourDeckOfCards=new Deck();
+        else
+            yourDeckOfCards = EditDeckScreen.load(EditDeckScreen.playDeckName);//loads deck based on the name of the last deck selected in EditDeckScreen
 
-        yourDeckOfCards = EditDeckScreen.load(EditDeckScreen.playDeckName);
         yourDeckOfCards.shuffle();
         enemyDeckOfCards = new Deck();
         enemyDeckOfCards.shuffle();
@@ -189,8 +199,11 @@ public class GameGUI extends JFrame{
         emptyMonsterSlots.add(enemyMonsterSlot1);
         enemyField.add(enemyMonsterSlot1);
 
-        padding = new JLabel();
-        enemyField.add(padding);
+        damageLog = new JTextArea();
+        damageLog.setBackground(Color.lightGray);
+        damageLog.setEditable(false);
+        damageLog.setText("Damage log\n");
+        enemyField.add(damageLog);
 
         container.add(enemyField);
         //end populate enemyField
@@ -294,17 +307,19 @@ public class GameGUI extends JFrame{
         container.add(yourHand);
         //end populate your hand
 
+        initializeYourTurn();
+
         setVisible(true);
     }
 
-    public boolean canDrawCard(Deck deck, ArrayList emptySlots){
+    public boolean canDrawCard(Deck deck, ArrayList emptySlots){//checks if slot is available in your hand and if there are cards left in the deck
         if(deck.getCurrentCards() > 0 && emptySlots.size() >0)
             return true;
         else
             return false;
     }
 
-    public void drawCard(boolean yours){
+    public void drawCard(boolean yours){//removes card from deck and adds it to the respective heldCards Array
         if(yours)
         {
             JPanel temp = yourEmptyHeldSlots.get(0);
@@ -313,6 +328,7 @@ public class GameGUI extends JFrame{
             card.addMouseListener(eventHandlerM);
             yourHeldCards.add(card);
             temp.add(card);
+            drawnCard=true;
         }
 
         else
@@ -324,8 +340,7 @@ public class GameGUI extends JFrame{
             enemyHeldCards.add(card);
             temp.add(card);
         }
-        updateCardCount(yours);
-
+        updateCardCount(yours);//sets the card count display based on the boolean parameter of this method
     }
 
     public void updateCardCount(boolean yours){
@@ -339,19 +354,12 @@ public class GameGUI extends JFrame{
         this.attacker = attacker;
     }
 
-    public MonsterCard getAttacker() {
-        return attacker;
-    }
-
     public void setRecipient(MonsterCard recipient) {
         this.recipient = recipient;
     }
 
-    public MonsterCard getRecipient() {
-        return recipient;
-    }
 
-    public void destroy (MonsterCard deadCard, boolean yours){
+    public void destroy (MonsterCard deadCard, boolean yours){//removes a dead card from the field and adds it to an empty JLabel off screen
 
         graveYard.add(deadCard);
         deadCard.setInPlay(false);
@@ -364,26 +372,24 @@ public class GameGUI extends JFrame{
 
     public void attack(MonsterCard attacker, MonsterCard recipient, boolean yours){//begin attack
         recipient.setHealth(recipient.getHealth()-attacker.getAttack());
+        damageLog.append("\n"+attacker.getName()+" attacked \n"+recipient.getName());
 
         if(yours)
         {
             if(recipient.getHealth()<=0)
             {
-
-                for(Card c : enemyMonsterCards)
-                {
-                    if(c.equals(recipient))
-                    {
-                        System.out.println("yas");
-                        c.getParent().setBackground(container.getBackground());
-                    }
+                for(Card c : enemyMonsterCards)                                     //This odd contraption is used to scan through the enemysCards Array
+                {                                                                   //and find the one that equals the recipient. It the sets the background
+                    if(c.equals(recipient))                                         //color to container.getBackground(). This is used in the AI code to
+                        c.getParent().setBackground(container.getBackground());     //determine if his monster slots contain a card or not
                 }
                 destroy(recipient, false);
                 updateHealth(recipient.getHealth(), false);
             }
             else
-                recipient.setToolTipText(recipient.toString());
+                recipient.setToolTipText(recipient.toString());//updates card health
 
+            attacker.setHasAttacked(true);//used to ensure card cannot attack more than once
             attacker.setSelected(false);
             this.attacker=null;
             this.recipient=null;
@@ -397,7 +403,7 @@ public class GameGUI extends JFrame{
                 updateHealth(recipient.getHealth(), true);
             }
             else
-                recipient.setToolTipText(recipient.toString());
+                recipient.setToolTipText(recipient.toString());//updates card health
 
             attacker.setSelected(false);
             this.attacker=null;
@@ -409,8 +415,8 @@ public class GameGUI extends JFrame{
     }//end attack
 
     public boolean canDirectAttack(boolean yours){//begin canDirectAttack
-        if(yours)
-        {
+        if(yours)                                 //This method scans through the monster slots to see if there's
+        {                                         //a card in play. if not, return true
             for(Card c : enemyMonsterCards)
             {
                 if(c.isInPlay())
@@ -429,20 +435,40 @@ public class GameGUI extends JFrame{
         }
     }//end canDirectAttack
 
-    public void directAttack(boolean yours){//begin directAttack
+    public void directAttack(boolean yours){//attacks with recipients health equal to 0 to simulate a direct attack
         JOptionPane.showMessageDialog(null, "Direct Attack");
-        recipient = new MonsterCard("", "", 0, 0);
+        recipient = new MonsterCard("", "directly", 0, 0);
         attack(attacker, recipient, yours);
-    }//end directAttack
+    }
 
-    public void activateEffect(MagicCard c){//begin ActivateEffect
-        switch (c.getType()){
-            case 'h':yourHealth+=c.getEffect();
-            yourHealthDisplay.setText("HP: "+yourHealth);
-            JOptionPane.showMessageDialog(null,c.getDescription());
-            break;
+    public void activateEffect(MagicCard c, boolean yours){//begin ActivateEffect
+        if(yours)
+        {
+            switch (c.getType()){//determines if a card heals or damages a player
+                case 'h':yourHealth+=c.getEffect();
+                    yourHealthDisplay.setText("HP: "+yourHealth);
+                    damageLog.append("\nYou healed for "+c.getEffect());
+                    JOptionPane.showMessageDialog(null,c.getDescription());
+                    break;
 
-            case 'd':updateHealth(c.getEffect(),false);
+                case 'd':updateHealth(c.getEffect()*-1,false);
+                    damageLog.append("\nYou used "+c.getName());
+                    JOptionPane.showMessageDialog(null,c.getDescription());
+                    break;
+            }
+        }
+        else
+        {
+            switch (c.getType()){//determines if a card heals or damages a player
+                case 'h':enemyHealth+=c.getEffect();
+                    damageLog.append("\nEnemy healed for "+c.getEffect());
+                    enemyHealthDisplay.setText("HP: "+enemyHealth);
+                    break;
+
+                case 'd':updateHealth(c.getEffect()*-1,true);
+                    damageLog.append("\nEnemy used "+c.getName());
+                    break;
+            }
         }
     }//end activateEffect
 
@@ -450,7 +476,8 @@ public class GameGUI extends JFrame{
         if(!yours)
         {
             enemyHealth += damage;
-            if(enemyHealth<0)
+            damageLog.append("\nEnemy took "+damage*-1+" damage");
+            if(enemyHealth<=0)//ends game if true
             {
                 enemyHealth=0;
                 JOptionPane.showMessageDialog(null,"You Win!");
@@ -463,7 +490,8 @@ public class GameGUI extends JFrame{
         else
         {
             yourHealth += damage;
-            if (yourHealth < 0)
+            damageLog.append("\nYou took "+damage*-1+" damage");
+            if (yourHealth <= 0)//ends game if true
             {
                 yourHealth = 0;
                 JOptionPane.showMessageDialog(null, "You Lose!");
@@ -474,10 +502,21 @@ public class GameGUI extends JFrame{
         }
     }//end updateHealth
 
+    public void initializeYourTurn(){// called at start and end of AI.play
+        drawnCard=false;
+        playedMonster=false;
+        for(Card c : yourMonsterCards) {
+            if (((MonsterCard) c).getHasAttacked()) ;
+            ((MonsterCard) c).setHasAttacked(false);
+        }
+        damageLog.setText("Damage Log\n");
+        yourTurn=true;
+    }
+
     private class MouseEventHandler implements MouseListener {//begin MouseEventHandler
         @Override
         public void mouseClicked(MouseEvent e) {//begin mouseClicked
-            if (yourTurn) {
+            if (yourTurn) {//used to ensure no clicking can be done while AI is running
                 for (Card c : yourHeldCards)//start card select event handling
                 {
                     if (e.getSource() == c) {
@@ -486,18 +525,20 @@ public class GameGUI extends JFrame{
                             if (x.isSelected()) {
                                 x.setSelected(false);
                             }
-                        }
+                        }//end card deselect process
+
                         c.setSelected(true);
 
-                        if (c instanceof MagicCard) {
+                        if (c instanceof MagicCard) {//immediately activates a magic card if its clicked
                             yourEmptyHeldSlots.add((JPanel) c.getParent());
                             yourMagicSlot.add(c);
                             yourHand.updateUI();
-                            activateEffect((MagicCard) c);
+                            activateEffect((MagicCard) c, true);
                             c.setSelected(false);
                             graveYard.add(c);
                             yourField.updateUI();
-                        } else if (!c.isInPlay()) {
+                        }//end magic card event handling
+                        else if (!c.isInPlay()) {//highlights monster zones
                             for (JPanel j : yourMonsterSlots) {
                                 j.setBackground(Color.green);
                             }
@@ -509,19 +550,24 @@ public class GameGUI extends JFrame{
                 {
                     if (e.getSource() == j) {
                         for (Card c : yourHeldCards) {
-                            if (c.isSelected() && !c.isInPlay()) {
-                                yourEmptyHeldSlots.add((JPanel) c.getParent());
-                                c.setSelected(false);
-                                c.setInPlay(true);
-                                j.add(c);
-                                yourMonsterCards.add(c);
-                                yourField.updateUI();
-                                yourHand.updateUI();
+                            if (c.isSelected() && !c.isInPlay()) {//checks if the card you clicked on is in your hand
+                                if(!playedMonster)//checks if you have already played a monster this turn
+                                {
+                                    yourEmptyHeldSlots.add((JPanel) c.getParent());     //adds the parent container of the selected card to an array that stores empty slots.
+                                    c.setSelected(false);                               //used in canDrawCard method
+                                    c.setInPlay(true);
+                                    j.add(c);
+                                    yourMonsterCards.add(c);
+                                    yourField.updateUI();
+                                    yourHand.updateUI();
+                                    playedMonster=true;
+                                }
+                                else
+                                    JOptionPane.showMessageDialog(null, "Can only play 1 monster per turn");
 
-                                for (JPanel p : yourMonsterSlots) {
+                                for (JPanel p : yourMonsterSlots) {//unhighlight monster zones
                                     p.setBackground(container.getBackground());
                                 }
-
                             }
                         }
                     }
@@ -530,15 +576,20 @@ public class GameGUI extends JFrame{
                 for (Card c : yourMonsterCards)//start attack event handling
                 {
                     if (e.getSource() == c && c.isInPlay()) {
-                        setAttacker((MonsterCard) c);
+                        if(!((MonsterCard) c).getHasAttacked())//checks to see if card has already attacked
+                        {
+                            setAttacker((MonsterCard) c);
 
-                        if (canDirectAttack(true))
-                            directAttack(true);
+                            if (canDirectAttack(true))
+                                directAttack(true);
+                        }
+                        else
+                            JOptionPane.showMessageDialog(null,"Card can only attack once");
                     }
                 }
 
                 for (Card c : enemyMonsterCards) {
-                    if (e.getSource() == c && attacker != null) {
+                    if (e.getSource() == c && attacker != null) {//checks if one of your monsters was clicked first
                         setRecipient((MonsterCard)c);
                         attack(attacker, recipient,true);
                     }
@@ -546,12 +597,12 @@ public class GameGUI extends JFrame{
 
                 if (e.getSource() == yourDeck)//start deck event handling
                 {
-                    if(canDrawCard(yourDeckOfCards, yourEmptyHeldSlots))
+                    if(canDrawCard(yourDeckOfCards, yourEmptyHeldSlots)&&!drawnCard)
                         drawCard(true);
                      else
                         JOptionPane.showMessageDialog(null, "You cannot draw a card");
                 }//end deck event handling
-            }
+            }//end if(yourTurn)
         }//end mouseClicked
 
         @Override
@@ -565,8 +616,7 @@ public class GameGUI extends JFrame{
         }
 
         @Override
-        public void mouseEntered(MouseEvent e) {//begin mouseEntered
-
+        public void mouseEntered(MouseEvent e) {//highlights your cards when you hover over them
             for (Card c : yourHeldCards) {
                 if (e.getSource() == c) {
                     if (!c.isSelected()) {
@@ -574,10 +624,10 @@ public class GameGUI extends JFrame{
                     }
                 }
             }
-        }//end MouseEntered
+        }
 
         @Override
-        public void mouseExited(MouseEvent e) {//begin mouseExited
+        public void mouseExited(MouseEvent e) {//unhighlight your cards when you stop hovering over them
             for (Card c : yourHeldCards) {
                 if (e.getSource() == c) {
                     if (!c.isSelected()) {
@@ -585,49 +635,66 @@ public class GameGUI extends JFrame{
                     }
                 }
             }
-        }//end MouseExited
-    }//end MouseEventHandler
+        }
+    }//end mouseEventHandler
 
-    private class ButtonEventHandler implements ActionListener{
-
+    private class ButtonEventHandler implements ActionListener{//ends your turn and calls AI.play
         @Override
         public void actionPerformed(ActionEvent e) {
-            JOptionPane.showMessageDialog(null,"End turn");
-            yourTurn=false;
-            ai.play();
+            if(yourTurn)
+            {
+                JOptionPane.showMessageDialog(null,"Opponents turn");
+                yourTurn=false;
+                ai.play();
+            }
         }
     }
 
     private class AI{
-        public void play(){
-            if(canDrawCard(enemyDeckOfCards, enemyEmptyHeldSlots))
-                drawCard(false);
+        Timer timer = new Timer();//Timer and timer.schedule gotten from https://www.youtube.com/watch?v=MjGnLRt6M6w
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
+        public void play(){//calls other methods for performing game tasks and schedules them so the tasks are distinguishable
+            damageLog.setText("Damage Log\n");
 
-            playCard();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    if(canDrawCard(enemyDeckOfCards, enemyEmptyHeldSlots))
+                        drawCard(false);
+                }
+            },0);
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    playCard();
+                }
+            },2000);
 
-            prepareAttacks();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    prepareAttacks();
+                }
+            },4000);
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ie) {
-                ie.printStackTrace();
-            }
-            yourTurn=true;
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    playMagic();
+                }
+            },8000);
+
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    initializeYourTurn();
+                    JOptionPane.showMessageDialog(null, "Your Turn");
+                }
+            },9000);
         }
 
-        public void playCard(){
+        public void playCard(){//plays a monster card if possible
             for(Card c : enemyHeldCards)
             {
                 if(c instanceof MonsterCard)
@@ -637,37 +704,36 @@ public class GameGUI extends JFrame{
                     {
                         for(JPanel j : emptyMonsterSlots)
                         {
-                            if(j.getBackground()!=Color.red)
-                            {
-                                c.setInPlay(true);
-                                c.addMouseListener(eventHandlerM);
-                                enemyEmptyHeldSlots.add((JPanel)c.getParent());
-                                JPanel temp = emptyMonsterSlots.get(emptyMonsterSlots.indexOf(j));          //here is where issues are <--------
-                                temp.setBackground(Color.red);               //<-----------
+                            if(j.getBackground()!=Color.red)                                            //if a monster card is to be played in a slot
+                            {                                                                           //the background must not be red.
+                                c.setInPlay(true);                                                      //the only way the background can become red
+                                c.addMouseListener(eventHandlerM);                                      //is if a card gets played on it
+                                enemyEmptyHeldSlots.add((JPanel)c.getParent());                         //when the card is destroyed its color is set back to
+                                JPanel temp = emptyMonsterSlots.get(emptyMonsterSlots.indexOf(j));      //container.getBackground().
+                                temp.setBackground(Color.red);                                          //it works and its completely rational
                                 temp.add(c);
                                 enemyMonsterCards.add(c);
                                 enemyField.updateUI();
                                 enemyHand.updateUI();
                                 break;
                             }
-                        }
+                        }//end inner for
                         break;
                     }
-
                 }
-            }
+            }//end outer for
         }
 
         public void prepareAttacks(){
             for(Card c : enemyMonsterCards)//begin to select enemy MonsterCard
             {
                 attacker=(MonsterCard)c;
-                if(attacker.getHealth()>0)
+                if(attacker.getHealth()>0)//makes sure its not in the graveyard
                 {
                     if(canDirectAttack(false))
                     {
                         directAttack(false);
-                        if(yourHealth<=0)
+                        if(yourHealth<=0)//stops attacking if you die
                             break;
                     }
                     else
@@ -680,10 +746,26 @@ public class GameGUI extends JFrame{
                                 attack(attacker, recipient, false);
                                 break;
                             }
-                        }
+                        }//end selecting your monster card
                     }
+                }
+            }//end for
+        }
+
+        public void playMagic(){
+            for(Card c : enemyHeldCards)
+            {
+                if(c instanceof MagicCard && !c.isInPlay())
+                {
+                    c.setInPlay(true);
+                    enemyEmptyHeldSlots.add((JPanel)c.getParent());
+                    enemyMagicSlot.add(c);
+                    enemyHand.updateUI();
+                    activateEffect((MagicCard)c,false);
+                    graveYard.add(c);
+                    enemyField.updateUI();
                 }
             }
         }
-    }
+    }//end AI
 }

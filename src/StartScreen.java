@@ -2,7 +2,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.*;
 
 public class StartScreen extends JFrame{
 
@@ -19,8 +18,8 @@ public class StartScreen extends JFrame{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        if(EditDeckScreen.deck==null)
-            EditDeckScreen.deck=EditDeckScreen.load("deck");
+        if(EditDeckScreen.playDeckName==null)
+            EditDeckScreen.deck=new Deck();
         else
             EditDeckScreen.deck=EditDeckScreen.load(EditDeckScreen.playDeckName);
 
