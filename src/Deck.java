@@ -7,6 +7,7 @@ public class Deck implements Serializable {
     private int maxNoCards;
     private int currentCards;
 
+    /**instantiates a new deck with pre-made cards*/
     public Deck(){
         allCards = new ArrayList<>();
 
@@ -37,48 +38,58 @@ public class Deck implements Serializable {
         MagicCard molotov = new MagicCard("Molotov.jpg","molotov",'d',"Damage the enemy for 10 points",10);
         allCards.add(molotov);
 
-        setMaxNoCards(allCards.size());
+        setMaxNoCards();
         setCurrentCards(maxNoCards);
     }
 
-    public Card get(String name){
-        for(Card c : allCards)
-        {
-            if(c.getName().equals(name))
-                return c;
-        }
-        return null;
-    }
-
+    /**Returns all cards in the deck
+     * @return all cards in the deck
+     */
     public ArrayList<Card> getAllCards() {
         return allCards;
     }
 
-    public void setMaxNoCards(int size) {
+    /**Sets the maximum number of cards in a deck*/
+    public void setMaxNoCards() {
         this.maxNoCards = allCards.size();
     }
 
+    /**Returns maximum number of cards for a deck
+     * @return maximum number of cards for a deck
+     */
     public int getMaxNoCards() {
         return maxNoCards;
     }
 
+    /**Sets the current amount of cards in a deck*/
     public void setCurrentCards(int numberOfCards) {
         this.currentCards = numberOfCards;
     }
 
+    /**Returns the current amount of cards in a deck
+     * @return the current amount of cards in a deck
+     */
     public int getCurrentCards() {
         return currentCards;
     }
 
+    /**Adds a card to the deck and updates the maximum and current cards in the deck
+     * @param card card to be added to the deck
+     */
     public void addCard(Card card){
         if(card instanceof MonsterCard)
             allCards.add((MonsterCard)card);
         else
             allCards.add((MagicCard)card);
 
-        setMaxNoCards(getMaxNoCards()+1);
+        setMaxNoCards();
+        setCurrentCards(getMaxNoCards());
     }
 
+    /**Removes a card from the deck and updates the maximum and current cards in the deck
+     * @param name the name of the card to be removed
+     * @return returns whether or not the card was removed
+     */
     public boolean removeCard(String name){
         Card card;
 
@@ -88,21 +99,24 @@ public class Deck implements Serializable {
             {
                 card=c;
                 allCards.remove(card);
-                setMaxNoCards(getMaxNoCards()-1);
+                setMaxNoCards();
+                setCurrentCards(getMaxNoCards());
                 return true;
             }
         }
-
         return false;
     }
 
+    /**Returns the next card in the deck
+     * @return the next card in the deck
+     */
     public Card draw(){
-        System.out.println(maxNoCards+" "+currentCards);
         Card nextCard = allCards.get(maxNoCards-currentCards);
         setCurrentCards(currentCards-1);
         return nextCard;
     }
 
+    /**Randomizes the index of all cards in the deck*/
     public void shuffle()
     {
         for(int i=0; i<allCards.size(); i++)

@@ -9,6 +9,7 @@ public class MagicCard extends Card {
         setType(type);
         setDescription(description);
         setEffect(effect);
+        setToolTipText(this.toString());
     }
 
     public String toString(){

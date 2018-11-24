@@ -7,7 +7,7 @@ import java.util.TimerTask;
 
 /*many methods require you to specify whether its you or the AI performing the action by using the
 * boolean parameter 'yours*/
-public class GameGUI extends JFrame{
+public class GameGUI extends JFrame{//main game
 
     ButtonEventHandler eventHandlerB;
     MouseEventHandler eventHandlerM;
@@ -410,8 +410,6 @@ public class GameGUI extends JFrame{
             this.recipient=null;
             yourField.updateUI();
         }
-
-        System.out.println(attacker.toString()+"   "+recipient.toString());
     }//end attack
 
     public boolean canDirectAttack(boolean yours){//begin canDirectAttack

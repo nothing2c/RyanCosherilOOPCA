@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class StartScreen extends JFrame{
+public class StartScreen extends JFrame{//loads first and allows user to access other 2 screens
 
     ButtonEventHandlerStart handlerS;
 
@@ -18,10 +18,10 @@ public class StartScreen extends JFrame{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        if(EditDeckScreen.playDeckName==null)
-            EditDeckScreen.deck=new Deck();
-        else
-            EditDeckScreen.deck=EditDeckScreen.load(EditDeckScreen.playDeckName);
+        if(EditDeckScreen.playDeckName==null)                                       //these lines are used to ensure that the decks that are currently being
+            EditDeckScreen.deck=new Deck();                                         //used are not 'tampered' ie. if the deck was recently in play it might have
+        else                                                                        //half it cards removed from being played, so this either loads the same
+            EditDeckScreen.deck=EditDeckScreen.load(EditDeckScreen.playDeckName);   //deck in full condition or instantiates a new one if there is nothing to load
 
         handlerS = new ButtonEventHandlerStart();
 
@@ -44,19 +44,8 @@ public class StartScreen extends JFrame{
         public void actionPerformed(ActionEvent e) {
             if(e.getSource()==start)
             {
-                if(EditDeckScreen.deck!=null)
-                {
-                    setVisible(false);
-                    GameGUI gui = new GameGUI();
-                }
-
-                else
-                {
-                    EditDeckScreen.deck=new Deck();
-                    System.out.println("Hello");
-                    setVisible(false);
-                    GameGUI gui = new GameGUI();
-                }
+                setVisible(false);
+                GameGUI gui = new GameGUI();
             }
 
             if(e.getSource()==editDeck)

@@ -136,15 +136,17 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
 
     public void delete(String name){//gotten from geeksforgeeks.com
         File file = new File(name+".dat");
-        if(file.delete())
-        {
-            JOptionPane.showMessageDialog(null,"Deck deleted successfully");
+            if(file.delete())
+                JOptionPane.showMessageDialog(null,"Deck deleted successfully");
+            else
+                JOptionPane.showMessageDialog(null,"Deck could not be deleted");
 
-            if(name.equals(playDeckName))
-                deck=load("deck");
+        if(name.equals(playDeckName))
+        {
+           deck = new Deck();
+           playDeckName=null;
+           JOptionPane.showMessageDialog(null,"Deleted current deck. Creating a new default deck");
         }
-        else
-            JOptionPane.showMessageDialog(null,"Deck could not be deleted");
     }
 
     private void updateText(){
@@ -234,10 +236,6 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             if(e.getSource()==saveDeck)
             {
                 String name = JOptionPane.showInputDialog("Enter the name of the deck");
-                while (name.equals("deck"))
-                {
-                    name = JOptionPane.showInputDialog("Cannot save with this name. Enter another name");
-                }
                 save(deck, name);
             }
 
@@ -252,10 +250,6 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
             if(e.getSource()==deleteDeck)
             {
                 String name = JOptionPane.showInputDialog("Enter the name of the deck to delete");
-                while (name.equals("deck"))
-                {
-                    name = JOptionPane.showInputDialog("Cannot delete this deck. Enter another name");
-                }
                 delete(name);
                 updateText();
             }
@@ -267,10 +261,6 @@ public class EditDeckScreen extends JFrame{//start EditDeckScreen
                 if(choice==JOptionPane.YES_OPTION)
                 {
                     String name = JOptionPane.showInputDialog("Enter the name of the deck");
-                    while (name.equals("deck"))
-                    {
-                        name = JOptionPane.showInputDialog("Cannot save with this name. Enter another name");
-                    }
                     save(deck, name);
                 }
                 setVisible(false);

@@ -6,15 +6,15 @@ public class Card extends JPanel{
     JLabel image;
     ImageIcon picture;
     private String name;
-    private boolean selected;
-    private boolean inPlay;
+    private boolean selected;//used to highlight your cards
+    private boolean inPlay;//used to determine whether a card is on the field or in tour hand
 
     public Card(String imagePath, String name){
         super();
         setName(name);
-        picture = new ImageIcon(imagePath);
-        image= new JLabel(picture);
-        add(image);
+        picture = new ImageIcon(imagePath);//creates image from path
+        image= new JLabel(picture);        //adds image to label
+        add(image);                        //adds label
     }
 
     public boolean isSelected() {
